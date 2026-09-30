@@ -175,7 +175,7 @@ exe = EXE(
     options,
     icon="./buzz/assets/buzz.ico",
     exclude_binaries=True,
-    name="Buzz",
+    name="LiricoAI",
     debug=DEBUG,
     bootloader_ignore_signals=False,
     strip=False,
@@ -195,17 +195,17 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="Buzz",
+    name="LiricoAI",
 )
 app = BUNDLE(
     coll,
-    name="Buzz.app",
+    name="LiricoAI.app",
     icon="./buzz/assets/buzz.icns",
-    bundle_identifier="com.chidiwilliams.buzz",
+    bundle_identifier="com.axiacorp.liricoai",
     version=VERSION,
     info_plist={
         "NSPrincipalClass": "NSApplication",
         "NSHighResolutionCapable": "True",
-        "NSMicrophoneUsageDescription": "Allow Buzz to record audio from your microphone.",
+        "NSMicrophoneUsageDescription": "Permita que o Lírico AI grave áudio pelo microfone.",
     },
 )
