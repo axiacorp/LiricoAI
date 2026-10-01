@@ -211,7 +211,7 @@ class FileTranscriptionFormWidget(QWidget):
     def _apply_content_prompt(self, emit: bool = True):
         content_type = self.content_type_combo_box.currentData() or "general"
         prompt = CONTENT_PROMPTS.get(content_type, "")
-        if prompt or not self.transcription_options.initial_prompt:
+        if content_type != "general" or self._current_mode() != "advanced":
             self.transcription_options.initial_prompt = prompt
 
         if emit:
