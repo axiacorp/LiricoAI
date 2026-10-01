@@ -26,8 +26,16 @@ class TestFileTranscriberWidget:
         mock_triggered = Mock()
         widget.triggered.connect(mock_triggered)
 
-        with qtbot.wait_signal(widget.triggered, timeout=30 * 1000):
-            qtbot.mouseClick(widget.run_button, Qt.MouseButton.LeftButton)
+        # The app's recommended offline fallback is now Large-V3-Turbo.
+        # Do not download a multi-gigabyte model in a UI unit test; this test is
+        # about the widget emitting the queued transcription options.
+        with patch.object(
+            TranscriptionModel,
+            "get_local_model_path",
+            return_value="/tmp/fake-model.bin",
+        ):
+            with qtbot.wait_signal(widget.triggered, timeout=30 * 1000):
+                qtbot.mouseClick(widget.run_button, Qt.MouseButton.LeftButton)
 
         (
             transcription_options,
