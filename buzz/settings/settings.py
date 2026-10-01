@@ -46,6 +46,8 @@ class Settings:
         FILE_TRANSCRIBER_LLM_PROMPT = "file-transcriber/llm-prompt"
         FILE_TRANSCRIBER_WORD_LEVEL_TIMINGS = "file-transcriber/word-level-timings"
         FILE_TRANSCRIBER_EXPORT_FORMATS = "file-transcriber/export-formats"
+        FILE_TRANSCRIBER_UI_MODE = "file-transcriber/ui-mode"
+        FILE_TRANSCRIBER_CONTENT_TYPE = "file-transcriber/content-type"
 
         TRANSCRIPTION_RESIZER_CREATE_NEW_TRANSCRIPT = (
             "transcription-resizer/create-new-transcript"
