@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lírico AI — Prévia</title>
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<div id="splash" class="splash">
+  <div class="splash-card">
+    <div class="brand-line"><div class="logo">▥</div><div><h1>Lírico AI</h1><p>Suas ideias, em texto.</p></div></div>
+    <div class="splash-center">
+      <h2>Transcrição <span>inteligente</span><br>de áudio e vídeo</h2>
+      <p>Preparando sua experiência de transcrição com IA</p>
+      <div class="progress"><div></div></div>
+      <small>AXIA CORP</small>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">▥</div><div><h2>Lírico AI</h2><p>Suas ideias, em texto.</p></div></div>
+    <nav>
+      <button class="nav active" data-page="inicio">⌂ <span>Início</span></button>
+      <button class="nav" data-page="transcrever">≋ <span>Transcrever</span></button>
+      <button class="nav" data-page="historico">◷ <span>Histórico</span></button>
+      <button class="nav" data-page="modelos">▧ <span>Modelos</span></button>
+      <button class="nav" data-page="configuracoes">⚙ <span>Configurações</span></button>
+    </nav>
+    <div class="pro-card">
+      <strong>♛ Lírico AI Pro</strong>
+      <p>Mais transcrições, modelos e recursos avançados.</p>
+      <button>Fazer upgrade</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <section id="inicio" class="page active-page">
+      <div class="topbar">
+        <div>
+          <p class="eyebrow">⌂ Olá, bem-vindo(a) de volta!</p>
+          <h1>Transcrição <span>inteligente</span> de áudio e vídeo</h1>
+          <p>Transforme seus áudios e vídeos em texto com rapidez, precisão e o poder da IA.</p>
+        </div>
+        <div class="profile">☼ <b>L</b> Lírico AI ▾</div>
+      </div>
+
+      <div class="grid top-grid">
+        <div class="card upload-card">
+          <div class="upload-icon">↑</div>
+          <h3>Arraste seu arquivo aqui</h3>
+          <p>Suporta MP3, M4A, WAV, MP4, MOV e mais.</p>
+          <div class="actions">
+            <button class="primary" id="selectDemo">▣ Selecionar arquivo</button>
+            <button class="secondary" id="recordDemo">♪ Gravar ao vivo</button>
+          </div>
+          <small>Você também pode soltar arquivos diretamente nesta janela.</small>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icons">▤ → ▣ → ▶</div>
+          <h3>Áudio ou vídeo, sem complicação</h3>
+          <p>Transcreva reuniões, aulas, entrevistas, podcasts e muito mais.</p>
+          <ul>
+            <li>Alta precisão com IA</li>
+            <li>Suporte a múltiplos formatos</li>
+            <li>Identificação de falantes</li>
+            <li>Exportação em vários formatos</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid lower-grid">
+        <div class="card transcript-card">
+          <div class="card-head"><h3>▤ Prévia da transcrição</h3><button class="ghost">✎ Editar</button></div>
+          <div class="transcript-lines">
+            <div><span>00:00</span><p>Olá, pessoal! Bom dia a todos. Hoje vamos conversar sobre como a inteligência artificial está transformando a forma como trabalhamos.</p></div>
+            <div><span>00:12</span><p>Nos últimos anos, vimos um grande avanço nas ferramentas de IA, que ajudam a automatizar tarefas e aumentar a nossa produtividade.</p></div>
+            <div><span>00:27</span><p>Mas é importante lembrar que a tecnologia é apenas uma ferramenta. O mais importante continua sendo o fator humano.</p></div>
+            <div><span>00:45</span><p>O Lírico AI ajuda a economizar tempo transcrevendo áudios, reuniões, aulas e entrevistas.</p></div>
+            <div><span>01:03</span><p>O objetivo é simples: transformar voz em texto com uma experiência clara, rápida e organizada.</p></div>
+          </div>
+          <div class="player"><button>▶</button><span>00:00 / 01:28</span><div class="wave">▁▂▅▇▃▆▂▅▇▃▂▆▃▅▇▂▃▁▅▇▆▃▂▁▂▃</div><span>1×</span></div>
+        </div>
+        <div class="side-cards">
+          <div class="card info-card">
+            <h3>▤ Informações do arquivo</h3>
+            <div><span>Nome</span><b id="homeFileName">Selecione um arquivo para começar</b></div>
+            <div><span>Tipo</span><b>Áudio ou vídeo</b></div>
+            <div><span>Idioma</span><b>Português (Brasil)</b></div>
+            <div><span>Duração</span><b>—</b></div>
+            <div><span>Status</span><b class="ok">Pronto para transcrever</b></div>
+          </div>
+          <div class="card export-card">
+            <h3>⇧ Exportar transcrição</h3>
+            <p>Abra uma transcrição concluída para exportar.</p>
+            <div class="actions"><button>TXT</button><button>PDF</button><button>DOCX</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="transcrever" class="page">
+      <div class="page-title"><h1>Transcrever</h1><p>Envie um arquivo e acompanhe o processamento.</p></div>
+      <div class="card upload-card big">
+        <div class="upload-icon">↑</div>
+        <h3 id="txTitle">Arraste seu arquivo aqui</h3>
+        <p id="txSub">Suporta MP3, M4A, WAV, MP4, MOV e mais.</p>
+        <div class="actions">
+          <button class="primary" id="txSelect">Selecionar arquivo</button>
+          <button class="secondary hidden" id="txStart">Iniciar transcrição</button>
+        </div>
+        <div id="txProgressWrap" class="tx-progress hidden"><div id="txProgress"></div></div>
+        <p id="txStatus"></p>
+      </div>
+    </section>
+
+    <section id="historico" class="page">
+      <div class="page-title"><h1>Histórico de transcrições</h1><p>Acompanhe, abra e organize todas as transcrições feitas no Lírico AI.</p></div>
+      <div class="history-toolbar card">
+        <input id="search" placeholder="Buscar transcrição" />
+        <div class="filters">
+          <button class="filter active" data-filter="todos">Todos</button>
+          <button class="filter" data-filter="concluido">Concluídas</button>
+          <button class="filter" data-filter="andamento">Em andamento</button>
+          <button class="filter" data-filter="erro">Com erro</button>
+        </div>
+        <select id="modelFilter"><option>Todos os modelos</option><option>Whisper Tiny</option><option>Whisper Medium</option><option>Whisper Large</option></select>
+        <button class="primary" data-go="transcrever">Nova transcrição</button>
+      </div>
+      <div class="card history-card">
+        <table>
+          <thead><tr><th>Arquivo</th><th>Modelo</th><th>Status</th><th>Duração</th><th>Data</th><th>Ações</th></tr></thead>
+          <tbody id="historyRows">
+            <tr data-status="concluido" data-model="Whisper Tiny" data-file="Anafilaxia 1.m4a"><td>Anafilaxia 1.m4a</td><td>Whisper Tiny</td><td><span class="badge success">Concluído</span></td><td>15 s</td><td>01/10/2026 01:23</td><td><button class="link open-detail">Abrir</button><button class="link">Exportar</button><button class="link danger">Excluir</button></td></tr>
+            <tr data-status="concluido" data-model="Whisper Medium" data-file="Aula de Pediatria.mp3"><td>Aula de Pediatria.mp3</td><td>Whisper Medium</td><td><span class="badge success">Concluído</span></td><td>08:42</td><td>30/09/2026 19:10</td><td><button class="link open-detail">Abrir</button><button class="link">Exportar</button><button class="link danger">Excluir</button></td></tr>
+            <tr data-status="andamento" data-model="Whisper Large" data-file="Reunião NIR.m4a"><td>Reunião NIR.m4a</td><td>Whisper Large</td><td><span class="badge progress-badge">Em andamento</span></td><td>—</td><td>30/09/2026 16:05</td><td><button class="link open-detail">Abrir</button><button class="link">Exportar</button><button class="link danger">Excluir</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="modelos" class="page">
+      <div class="page-title"><h1>Modelos</h1><p>Escolha o equilíbrio ideal entre velocidade e precisão.</p></div>
+      <div class="model-grid">
+        <div class="card model selected"><h3>Whisper Tiny</h3><p>Mais rápido, menor uso de memória.</p><div>Velocidade ●●●●●</div><div>Precisão ●●○○○</div><button class="primary">Selecionado</button></div>
+        <div class="card model"><h3>Whisper Base</h3><p>Leve e equilibrado.</p><div>Velocidade ●●●●○</div><div>Precisão ●●●○○</div><button>Selecionar</button></div>
+        <div class="card model"><h3>Whisper Small</h3><p>Bom equilíbrio geral.</p><div>Velocidade ●●●○○</div><div>Precisão ●●●●○</div><button>Selecionar</button></div>
+        <div class="card model"><h3>Whisper Medium</h3><p>Mais precisão para aulas e reuniões.</p><div>Velocidade ●●○○○</div><div>Precisão ●●●●●</div><button>Selecionar</button></div>
+        <div class="card model"><h3>Whisper Large</h3><p>Máxima precisão, maior processamento.</p><div>Velocidade ●○○○○</div><div>Precisão ●●●●●</div><button>Selecionar</button></div>
+      </div>
+    </section>
+
+    <section id="configuracoes" class="page">
+      <div class="page-title"><h1>Configurações</h1><p>Personalize o comportamento do Lírico AI.</p></div>
+      <div class="card settings-card">
+        <label>Idioma da interface<select><option>Português (Brasil)</option></select></label>
+        <label>Idioma padrão de transcrição<select><option>Português (Brasil)</option><option>Detecção automática</option></select></label>
+        <label>Pasta de exportação<div class="inline"><input value="Documentos/Lírico AI" /><button>Escolher</button></div></label>
+        <label>Tema<select id="themeSelect"><option value="light">Claro</option><option value="dark">Escuro</option></select></label>
+        <div><span class="label-title">Formatos de exportação</span><div class="checks"><label><input type="checkbox" checked> TXT</label><label><input type="checkbox" checked> PDF</label><label><input type="checkbox" checked> DOCX</label></div></div>
+        <button class="primary">Salvar configurações</button>
+      </div>
+    </section>
+
+    <section id="detalhe" class="page">
+      <div class="page-title"><button class="back" data-go="historico">← Voltar ao Histórico</button><h1 id="detailTitle">Anafilaxia 1.m4a</h1><p>Transcrição concluída · Português (Brasil)</p></div>
+      <div class="grid detail-grid">
+        <div class="card transcript-card">
+          <div class="card-head"><h3>Texto transcrito</h3><div><button class="ghost">Editar</button><button class="primary">Exportar</button></div></div>
+          <div class="transcript-lines">
+            <div><span>00:00</span><p>Paciente com quadro compatível com reação alérgica sistêmica de início súbito.</p></div>
+            <div><span>00:12</span><p>Apresenta sinais respiratórios e cutâneos, exigindo reconhecimento rápido e tratamento imediato.</p></div>
+            <div><span>00:27</span><p>A avaliação inicial deve priorizar via aérea, respiração e circulação.</p></div>
+          </div>
+          <div class="player"><button>▶</button><span>00:00 / 00:42</span><div class="wave">▁▃▆▇▅▂▆▃▅▇▂▃▆▅▂▁▅▇</div><span>1×</span></div>
+        </div>
+        <div class="card info-card">
+          <h3>Informações</h3>
+          <div><span>Modelo</span><b>Whisper Tiny</b></div>
+          <div><span>Status</span><b class="ok">Concluído</b></div>
+          <div><span>Duração</span><b>42 s</b></div>
+          <div><span>Data</span><b>01/10/2026 01:23</b></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="./app.js"></script>
+</body>
+</html>
