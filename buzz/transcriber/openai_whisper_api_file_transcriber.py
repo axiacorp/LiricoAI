@@ -49,7 +49,7 @@ class OpenAIWhisperAPIFileTranscriber(FileTranscriber):
             max_retries=0
         )
         self.whisper_api_model = settings.value(
-            key=Settings.Key.OPENAI_API_MODEL, default_value="whisper-1"
+            key=Settings.Key.OPENAI_API_MODEL, default_value="gpt-transcribe"
         )
         self.word_level_timings = self.transcription_task.transcription_options.word_level_timings
         logging.debug("Will use whisper API on %s, %s",
@@ -69,7 +69,13 @@ class OpenAIWhisperAPIFileTranscriber(FileTranscriber):
             "ffmpeg",
             "-threads", "0",
             "-loglevel", "panic",
-            "-i", self.transcription_task.file_path, mp3_file
+            "-i", self.transcription_task.file_path,
+            "-vn",
+            "-ac", "1",
+            "-ar", "16000",
+            "-codec:a", "libmp3lame",
+            "-b:a", "64k",
+            mp3_file
         ]
 
         if sys.platform == "win32":
@@ -192,8 +198,11 @@ class OpenAIWhisperAPIFileTranscriber(FileTranscriber):
 
     def get_segments_for_file(self, file: str, offset_ms: int = 0):
         with open(file, "rb") as file:
-            # gpt-4o models don't support verbose_json format
-            response_format = "json" if self.whisper_api_model.startswith("gpt-4o") else "verbose_json"
+            # Modern transcription models return JSON text and do not expose the
+            # legacy Whisper verbose_json/timestamp schema. Keep verbose_json only
+            # for whisper-1 so newer models work without unsupported parameters.
+            supports_verbose_json = self.whisper_api_model == "whisper-1"
+            response_format = "verbose_json" if supports_verbose_json else "json"
 
             options = {
                 "model": self.whisper_api_model,
@@ -202,7 +211,7 @@ class OpenAIWhisperAPIFileTranscriber(FileTranscriber):
                 "prompt": self.transcription_task.transcription_options.initial_prompt,
             }
 
-            if self.word_level_timings:
+            if self.word_level_timings and supports_verbose_json:
                 options["timestamp_granularities"] = ["word"]
 
             transcript = (
