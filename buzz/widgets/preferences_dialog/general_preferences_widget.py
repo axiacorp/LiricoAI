@@ -130,6 +130,11 @@ class GeneralPreferencesWidget(QWidget):
         self.openai_api_model = self.settings.value(
             key=Settings.Key.OPENAI_API_MODEL, default_value="gpt-transcribe"
         )
+        if not self.custom_openai_base_url and self.openai_api_model == "whisper-1":
+            self.openai_api_model = "gpt-transcribe"
+            self.settings.set_value(
+                Settings.Key.OPENAI_API_MODEL, self.openai_api_model
+            )
 
         self.openai_api_model_line_edit = LineEdit(self.openai_api_model, self)
         self.openai_api_model_line_edit.textChanged.connect(
