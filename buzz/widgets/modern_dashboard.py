@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 
+# Build trigger: Windows workflow with Vulkan SDK prerequisite.
 ORANGE = "#ff5a1f"
 ORANGE_DARK = "#e9470f"
 INK = "#111827"
