@@ -11,6 +11,7 @@ on:
       - "installer.iss"
       - "pyproject.toml"
       - "uv.lock"
+      - "Makefile"
       - ".github/workflows/lirico-windows.yml"
 
 concurrency:
