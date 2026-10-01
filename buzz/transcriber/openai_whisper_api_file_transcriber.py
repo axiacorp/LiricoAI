@@ -48,9 +48,18 @@ class OpenAIWhisperAPIFileTranscriber(FileTranscriber):
             base_url=custom_openai_base_url if custom_openai_base_url else None,
             max_retries=0
         )
-        self.whisper_api_model = settings.value(
-            key=Settings.Key.OPENAI_API_MODEL, default_value="gpt-transcribe"
+        configured_model = settings.value(
+            key=Settings.Key.OPENAI_API_MODEL, default_value=""
         )
+        if custom_openai_base_url:
+            self.whisper_api_model = configured_model or "whisper-1"
+        else:
+            # Migrate the legacy default to the current high-accuracy model.
+            self.whisper_api_model = (
+                "gpt-transcribe"
+                if configured_model in ("", "whisper-1")
+                else configured_model
+            )
         self.word_level_timings = self.transcription_task.transcription_options.word_level_timings
         logging.debug("Will use whisper API on %s, %s",
                       custom_openai_base_url, self.whisper_api_model)
@@ -225,13 +234,15 @@ class OpenAIWhisperAPIFileTranscriber(FileTranscriber):
 
             segments = getattr(transcript, "segments", None)
 
+            extra = getattr(transcript, "model_extra", None) or {}
+
             words = getattr(transcript, "words", None)
-            if words is None and "words" in transcript.model_extra:
-                words = transcript.model_extra["words"]
+            if words is None and "words" in extra:
+                words = extra["words"]
 
             if segments is None:
-                if "segments" in transcript.model_extra:
-                    segments = transcript.model_extra["segments"]
+                if "segments" in extra:
+                    segments = extra["segments"]
                 else:
                     # gpt-4o models return only text without segments/timestamps
                     segments = [{"text": transcript.text, "start": 0, "end": 0, "words": words}]
