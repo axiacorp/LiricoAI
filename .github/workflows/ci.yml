@@ -238,10 +238,9 @@ jobs:
 
             brew install create-dmg
 
-            # Pull requests only need to prove that the macOS app can be bundled.
-            # Code signing/notarization credentials are release secrets and should
-            # not be required for PR validation.
-            if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
+            # Pull requests and repositories without Apple signing secrets
+            # should still produce a usable unsigned macOS installer.
+            if [ "$GITHUB_EVENT_NAME" == "pull_request" ] || [ -z "$BUILD_CERTIFICATE_BASE64" ]; then
               uv run make bundle_mac_unsigned
             else
               sudo pkill -9 XProtect >/dev/null || true;
