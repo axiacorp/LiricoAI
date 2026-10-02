@@ -128,16 +128,21 @@ class GeneralPreferencesWidget(QWidget):
         layout.addRow(_("OpenAI base url"), self.custom_openai_base_url_line_edit)
 
         self.openai_api_model = self.settings.value(
-            key=Settings.Key.OPENAI_API_MODEL, default_value="whisper-1"
+            key=Settings.Key.OPENAI_API_MODEL, default_value="gpt-transcribe"
         )
+        if not self.custom_openai_base_url and self.openai_api_model == "whisper-1":
+            self.openai_api_model = "gpt-transcribe"
+            self.settings.set_value(
+                Settings.Key.OPENAI_API_MODEL, self.openai_api_model
+            )
 
         self.openai_api_model_line_edit = LineEdit(self.openai_api_model, self)
         self.openai_api_model_line_edit.textChanged.connect(
             self.on_openai_api_model_changed
         )
         self.openai_api_model_line_edit.setMinimumWidth(200)
-        self.openai_api_model_line_edit.setPlaceholderText("whisper-1")
-        layout.addRow(_("OpenAI API model"), self.openai_api_model_line_edit)
+        self.openai_api_model_line_edit.setPlaceholderText("gpt-transcribe")
+        layout.addRow(_("OpenAI transcription model"), self.openai_api_model_line_edit)
 
         default_export_file_name = self.settings.get_default_export_file_template()
 
@@ -262,7 +267,7 @@ class GeneralPreferencesWidget(QWidget):
         QMessageBox.information(
             self,
             _("OpenAI API Key Test"),
-            _("Your API key is valid. Buzz will use this key to perform Whisper API transcriptions and AI translations."),
+            _("Your API key is valid. Lírico AI will use it for high-accuracy online transcriptions and AI features."),
         )
 
     def on_test_openai_api_key_failure(self, error: str):

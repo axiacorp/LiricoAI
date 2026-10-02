@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 from pytestqt.qtbot import QtBot
 
 from buzz.locale import _
+from buzz.settings.settings import Settings
 from buzz.db.entity.transcription import Transcription
 from buzz.db.service.transcription_service import TranscriptionService
 from buzz.model_loader import TranscriptionModel, ModelType, WhisperModelSize
@@ -104,6 +105,9 @@ class TestMainWindow:
         self, qtbot: QtBot, db, transcription_service
     ):
         window = MainWindow(transcription_service)
+        # Integration tests intentionally use their explicit Tiny model fixture.
+        # The product default is now Automatic/ Large-V3-Turbo when offline.
+        window.settings.set_value(Settings.Key.FILE_TRANSCRIBER_UI_MODE, "advanced")
         menu: QMenuBar = window.menuBar()
         file_action = menu.actions()[0]
         import_url_action: QAction = file_action.menu().actions()[1]
@@ -462,6 +466,10 @@ class TestMainWindow:
     def _import_file_and_start_transcription(
         window: MainWindow, long_audio: bool = False
     ):
+        # Keep this integration test on the small deterministic fixture model;
+        # production defaults are tested separately by the transcription form.
+        window.settings.set_value(Settings.Key.FILE_TRANSCRIBER_UI_MODE, "advanced")
+
         default_prefs = FileTranscriptionPreferences(
             language=None,
             task=Task.TRANSCRIBE,
