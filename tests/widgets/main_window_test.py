@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 from pytestqt.qtbot import QtBot
 
 from buzz.locale import _
+from buzz.settings.settings import Settings
 from buzz.db.entity.transcription import Transcription
 from buzz.db.service.transcription_service import TranscriptionService
 from buzz.model_loader import TranscriptionModel, ModelType, WhisperModelSize
