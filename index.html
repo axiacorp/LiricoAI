@@ -302,6 +302,71 @@ async function ensureFFmpeg(){
   return ffmpeg;
 }
 
+async function loadScriptOnce(src, globalName){
+  if(window[globalName]) return;
+  await new Promise((resolve,reject)=>{
+    const existing=[...document.scripts].find(s=>s.src===src);
+    if(existing){
+      const timer=setInterval(()=>{
+        if(window[globalName]){clearInterval(timer);resolve();}
+      },100);
+      setTimeout(()=>{clearInterval(timer);window[globalName]?resolve():reject(new Error('Tempo esgotado ao carregar '+globalName));},15000);
+      return;
+    }
+    const s=document.createElement('script');
+    s.src=src;
+    s.onload=()=>window[globalName]?resolve():reject(new Error(globalName+' não ficou disponível'));
+    s.onerror=()=>reject(new Error('Não foi possível carregar '+src));
+    document.head.appendChild(s);
+  });
+}
+
+function floatTo16BitPCM(float32){
+  const out=new Int16Array(float32.length);
+  for(let i=0;i<float32.length;i++){
+    const s=Math.max(-1,Math.min(1,float32[i]));
+    out[i]=s<0?s*0x8000:s*0x7fff;
+  }
+  return out;
+}
+
+async function convertToMp3InBrowser(file){
+  done.textContent='Carregando codificador MP3...';
+  await loadScriptOnce('https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js','lamejs');
+
+  done.textContent='Decodificando o áudio...';
+  const arrayBuffer=await file.arrayBuffer();
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx) throw new Error('Este navegador não oferece AudioContext.');
+  const ctx=new AudioCtx();
+  const audioBuffer=await ctx.decodeAudioData(arrayBuffer.slice(0));
+  await ctx.close();
+
+  const channels=Math.min(2,audioBuffer.numberOfChannels);
+  const sampleRate=audioBuffer.sampleRate;
+  const left=floatTo16BitPCM(audioBuffer.getChannelData(0));
+  const right=channels>1?floatTo16BitPCM(audioBuffer.getChannelData(1)):left;
+  const encoder=new lamejs.Mp3Encoder(channels,sampleRate,192);
+  const block=1152;
+  const parts=[];
+  const total=left.length;
+
+  done.textContent='Convertendo para MP3... 0%';
+  for(let i=0;i<total;i+=block){
+    const l=left.subarray(i,Math.min(i+block,total));
+    const r=right.subarray(i,Math.min(i+block,total));
+    const buf=channels===1?encoder.encodeBuffer(l):encoder.encodeBuffer(l,r);
+    if(buf.length) parts.push(new Uint8Array(buf));
+    const pct=Math.min(99,Math.round(((i+block)/total)*100));
+    convbar.style.width=pct+'%';
+    done.textContent='Convertendo para MP3... '+pct+'%';
+    if(i%(block*250)===0) await new Promise(res=>setTimeout(res,0));
+  }
+  const end=encoder.flush();
+  if(end.length) parts.push(new Uint8Array(end));
+  return new Blob(parts,{type:'audio/mpeg'});
+}
+
 async function convert(){
   const input=document.getElementById('convfile');
   const file=input.files && input.files[0];
@@ -319,8 +384,28 @@ async function convert(){
   if(convertButton){convertButton.disabled=true;convertButton.textContent='Convertendo...';}
 
   try{
-    const ffmpeg=await ensureFFmpeg();
     const fmt=convFormat.value;
+
+    if(fmt==='MP3'){
+      const blob=await convertToMp3InBrowser(file);
+      if(convertedBlobUrl) URL.revokeObjectURL(convertedBlobUrl);
+      convertedBlobUrl=URL.createObjectURL(blob);
+      const baseName=file.name.replace(/\.[^/.]+$/,'')||'arquivo';
+      convertedName.textContent=baseName+'_convertido.mp3';
+      convertedMeta.textContent='Conversão real concluída • MP3 • '+formatBytes(blob.size);
+      convbar.style.width='100%';
+      done.textContent='Conversão MP3 concluída com sucesso.';
+      done.classList.add('show');
+      downloadCard.classList.add('show');
+      downloadCard.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+
+    done.textContent='Carregando FFmpeg para '+fmt+'...';
+    const ffmpeg=await Promise.race([
+      ensureFFmpeg(),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('O FFmpeg demorou demais para carregar neste navegador.')),25000))
+    ]);
     const extMap={'MP3':'mp3','WAV':'wav','M4A / AAC':'m4a','AAC':'aac','FLAC':'flac','OGG':'ogg','WMA':'wma','MP4':'mp4'};
     const argsMap={
       'MP3':['-vn','-c:a','libmp3lame','-q:a','2'],
