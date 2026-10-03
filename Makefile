@@ -1,19 +1,19 @@
 # Change also in pyproject.toml and buzz/__version__.py
 version := 1.4.6
 
-mac_app_path := ./dist/Buzz.app
-mac_zip_path := ./dist/Buzz-${version}-mac.zip
-mac_dmg_path := ./dist/Buzz-${version}-mac.dmg
+mac_app_path := ./dist/LiricoAI.app
+mac_zip_path := ./dist/LiricoAI-${version}-mac.zip
+mac_dmg_path := ./dist/LiricoAI-${version}-mac.dmg
 
-bundle_windows: dist/Buzz
+bundle_windows: dist/LiricoAI
 	# Sanity-check: both halves of OpenSSL must ship together, otherwise users with
 	# a system OpenSSL on PATH hit "CRYPTO_calloc not found" from a mismatched pair.
 	powershell -NoProfile -Command "if (-not (Get-ChildItem -Path 'dist\Buzz' -Recurse -Filter 'libssl-3-x64.dll' -ErrorAction SilentlyContinue)) { Write-Error 'Missing libssl-3-x64.dll in dist\Buzz'; exit 1 }; if (-not (Get-ChildItem -Path 'dist\Buzz' -Recurse -Filter 'libcrypto-3-x64.dll' -ErrorAction SilentlyContinue)) { Write-Error 'Missing libcrypto-3-x64.dll in dist\Buzz'; exit 1 }"
 	iscc installer.iss
 
-bundle_mac: dist/Buzz.app codesign_all_mac zip_mac notarize_zip staple_app_mac dmg_mac
+bundle_mac: dist/LiricoAI.app codesign_all_mac zip_mac notarize_zip staple_app_mac dmg_mac
 
-bundle_mac_unsigned: dist/Buzz.app zip_mac dmg_mac_unsigned
+bundle_mac_unsigned: dist/LiricoAI.app zip_mac dmg_mac_unsigned
 
 bundle_appimage: dist/Buzz
 	./appimage/build-appimage.sh
@@ -54,7 +54,10 @@ endif
 benchmarks: buzz/whisper_cpp ctc_forced_aligner_ext
 	pytest -s -vv --benchmark-only --benchmark-json benchmarks.json
 
-dist/Buzz dist/Buzz.app: buzz/whisper_cpp
+dist/LiricoAI dist/LiricoAI.app: buzz/whisper_cpp
+	pyinstaller --noconfirm LiricoAI.spec
+
+dist/Buzz: buzz/whisper_cpp
 	pyinstaller --noconfirm Buzz.spec
 
 version:
@@ -122,13 +125,13 @@ print_identities_mac:
 dmg_mac:
 	ditto -x -k "${mac_zip_path}" dist/dmg
 	create-dmg \
-		--volname "Buzz" \
+		--volname "Lírico AI" \
 		--volicon "./buzz/assets/buzz.icns" \
 		--window-pos 200 120 \
 		--window-size 600 300 \
 		--icon-size 100 \
-		--icon "Buzz.app" 175 120 \
-		--hide-extension "Buzz.app" \
+		--icon "LiricoAI.app" 175 120 \
+		--hide-extension "LiricoAI.app" \
 		--app-drop-link 425 120 \
 		--codesign "$$BUZZ_CODESIGN_IDENTITY" \
 		--notarize "$$BUZZ_KEYCHAIN_NOTARY_PROFILE" \
@@ -139,13 +142,13 @@ dmg_mac:
 dmg_mac_unsigned:
 	ditto -x -k "${mac_zip_path}" dist/dmg
 	create-dmg \
-		--volname "Buzz" \
+		--volname "Lírico AI" \
 		--volicon "./buzz/assets/buzz.icns" \
 		--window-pos 200 120 \
 		--window-size 600 300 \
 		--icon-size 100 \
-		--icon "Buzz.app" 175 120 \
-		--hide-extension "Buzz.app" \
+		--icon "LiricoAI.app" 175 120 \
+		--hide-extension "LiricoAI.app" \
 		--app-drop-link 425 120 \
 		"${mac_dmg_path}" \
 		"dist/dmg/"
@@ -159,22 +162,22 @@ notarize_zip:
 zip_mac:
 	ditto -c -k --keepParent "${mac_app_path}" "${mac_zip_path}"
 
-codesign_all_mac: dist/Buzz.app
-	for i in $$(find dist/Buzz.app/Contents/Resources/torch/bin -name "*" -type f); \
+codesign_all_mac: dist/LiricoAI.app
+	for i in $$(find dist/LiricoAI.app/Contents/Resources/torch/bin -name "*" -type f); \
 	do \
 		codesign --force --options=runtime --sign "$$BUZZ_CODESIGN_IDENTITY" --timestamp "$$i"; \
 	done
-	for i in $$(find dist/Buzz.app/Contents/Resources -name "*.dylib" -o -name "*.so" -type f); \
+	for i in $$(find dist/LiricoAI.app/Contents/Resources -name "*.dylib" -o -name "*.so" -type f); \
 	do \
 		codesign --force --options=runtime --sign "$$BUZZ_CODESIGN_IDENTITY" --timestamp "$$i"; \
 	done
-	for i in $$(find dist/Buzz.app/Contents/MacOS -name "*.dylib" -o -name "*.so" -o -name "Qt*" -o -name "Python" -type f); \
+	for i in $$(find dist/LiricoAI.app/Contents/MacOS -name "*.dylib" -o -name "*.so" -o -name "Qt*" -o -name "Python" -type f); \
 	do \
 		codesign --force --options=runtime --sign "$$BUZZ_CODESIGN_IDENTITY" --timestamp "$$i"; \
 	done
-	codesign --force --options=runtime --sign "$$BUZZ_CODESIGN_IDENTITY" --timestamp dist/Buzz.app/Contents/MacOS/Buzz
-	codesign --force --options=runtime --sign "$$BUZZ_CODESIGN_IDENTITY" --entitlements ./entitlements.plist --timestamp dist/Buzz.app
-	codesign --verify --deep --strict --verbose=2 dist/Buzz.app
+	codesign --force --options=runtime --sign "$$BUZZ_CODESIGN_IDENTITY" --timestamp dist/LiricoAI.app/Contents/MacOS/LiricoAI
+	codesign --force --options=runtime --sign "$$BUZZ_CODESIGN_IDENTITY" --entitlements ./entitlements.plist --timestamp dist/LiricoAI.app
+	codesign --verify --deep --strict --verbose=2 dist/LiricoAI.app
 
 # HELPERS
 
