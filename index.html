@@ -158,7 +158,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 <div class="hist"><p class="ey">HISTÓRICO</p><div class="histitem"><div><strong>Anafilaxia 1.m4a</strong><div style="color:#817971;font-size:12px">Aula médica • Português (Brasil)</div></div><span class="badge">Concluída</span></div></div>
 <div class="footer">Prévia online em HTML/JavaScript • sem Lovable • sem cobrança.</div>
 </section>
-<section id="conv" class="converter"><p class="ey">CONVERSOR DE MÍDIA</p><h1>Converter arquivo</h1><p class="sub">Conversão local e gratuita usando FFmpeg. Nenhum arquivo é enviado para a internet.</p>
+<section id="conv" class="converter"><p class="ey">CONVERSOR DE MÍDIA</p><h1>Converter arquivo</h1><p class="sub">Conversão real no próprio navegador usando FFmpeg WebAssembly. Nenhum arquivo é enviado para a internet.</p>
 <div class="card"><div class="grid"><div class="field"><label>Arquivo de origem</label><input id="convname" type="text" value="Selecionar arquivo..." readonly onclick="convfile.click()"><input id="convfile" type="file" hidden onchange="convname.value=this.files[0]?.name||'Selecionar arquivo...'"></div><div class="field"><label>Formato de saída</label><select id="convFormat"><option>MP3</option><option>WAV</option><option>M4A / AAC</option><option>AAC</option><option>FLAC</option><option>OGG</option><option>WMA</option><option>MP4</option></select></div></div><div class="actions"><button class="go" onclick="convert()">Converter</button></div><div class="bar"><span id="convbar"></span></div><div class="ok" id="done">Conversão concluída.</div>
 <div class="downloadcard" id="downloadCard">
   <div class="downloadrow">
@@ -171,8 +171,8 @@ button,input,select{font:inherit}button{cursor:pointer}
       <button class="downloadbtn" onclick="downloadConvertedPreview()">Baixar arquivo convertido</button>
     </div>
   </div>
-  <div class="note" style="margin-top:10px">Na prévia online, o download é demonstrativo. No aplicativo instalado, o arquivo será realmente convertido pelo FFmpeg e você poderá escolher onde salvar.</div>
-</div></div><div class="footer">No aplicativo real, a conversão será feita localmente com FFmpeg.</div></section>
+  <div class="note" style="margin-top:10px">Este arquivo foi convertido de verdade no seu navegador. Clique em baixar para salvar o resultado.</div>
+</div></div><div class="footer">Nesta página, a conversão também é real e acontece localmente no navegador com FFmpeg WebAssembly.</div></section>
 </main></div></div></div>
 <script>
 setTimeout(()=>splash.classList.add('hide'),2500);
@@ -269,45 +269,136 @@ function resetTranscription(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function pick(b){document.querySelectorAll('#types .chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');med.style.display=b.textContent.trim()==='Aula médica'?'flex':'none'}
-function convert(){
+let convertedBlobUrl=null;
+let ffmpegInstance=null;
+let ffmpegReady=false;
+
+async function ensureFFmpeg(){
+  if(ffmpegReady && ffmpegInstance) return ffmpegInstance;
+
+  const [{ FFmpeg }, { fetchFile, toBlobURL }] = await Promise.all([
+    import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js'),
+    import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js')
+  ]);
+
+  const ffmpeg=new FFmpeg();
+  ffmpeg.on('progress', ({progress})=>{
+    const pct=Math.max(0,Math.min(100,Math.round(progress*100)));
+    convbar.style.width=pct+'%';
+    done.textContent='Convertendo... '+pct+'%';
+    done.classList.add('show');
+  });
+
+  const base='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
+  await ffmpeg.load({
+    coreURL: await toBlobURL(base+'/ffmpeg-core.js','text/javascript'),
+    wasmURL: await toBlobURL(base+'/ffmpeg-core.wasm','application/wasm')
+  });
+
+  ffmpeg._fetchFile=fetchFile;
+  ffmpegInstance=ffmpeg;
+  ffmpegReady=true;
+  return ffmpeg;
+}
+
+async function convert(){
+  const input=document.getElementById('convfile');
+  const file=input.files && input.files[0];
+  if(!file){
+    alert('Selecione primeiro um arquivo para converter.');
+    return;
+  }
+
   done.classList.remove('show');
   downloadCard.classList.remove('show');
   convbar.style.width='0%';
-  let v=0;
-  let t=setInterval(()=>{
-    v+=10;
-    convbar.style.width=v+'%';
-    if(v>=100){
-      clearInterval(t);
-      const source=(convname.value||'arquivo').trim();
-      const fmt=convFormat.value;
-      const extMap={'MP3':'mp3','WAV':'wav','M4A / AAC':'m4a','AAC':'aac','FLAC':'flac','OGG':'ogg','WMA':'wma','MP4':'mp4'};
-      const ext=extMap[fmt]||'mp3';
-      const base=source.replace(/\.[^/.]+$/,'')||'arquivo';
-      convertedName.textContent=base+'_convertido.'+ext;
-      convertedMeta.textContent='Pronto para baixar • Formato: '+fmt+' • Destino sugerido: Downloads';
-      done.classList.add('show');
-      downloadCard.classList.add('show');
-      downloadCard.scrollIntoView({behavior:'smooth',block:'center'});
-    }
-  },90);
+  done.textContent='Carregando o mecanismo de conversão...';
+  done.classList.add('show');
+
+  try{
+    const ffmpeg=await ensureFFmpeg();
+    const fmt=convFormat.value;
+    const extMap={'MP3':'mp3','WAV':'wav','M4A / AAC':'m4a','AAC':'aac','FLAC':'flac','OGG':'ogg','WMA':'wma','MP4':'mp4'};
+    const argsMap={
+      'MP3':['-vn','-c:a','libmp3lame','-q:a','2'],
+      'WAV':['-vn','-c:a','pcm_s16le'],
+      'M4A / AAC':['-vn','-c:a','aac','-b:a','192k'],
+      'AAC':['-vn','-c:a','aac','-b:a','192k','-f','adts'],
+      'FLAC':['-vn','-c:a','flac'],
+      'OGG':['-vn','-c:a','libvorbis','-q:a','5'],
+      'WMA':['-vn','-c:a','wmav2','-b:a','192k'],
+      'MP4':['-c:v','mpeg4','-q:v','4','-c:a','aac','-b:a','192k']
+    };
+
+    const ext=extMap[fmt]||'mp3';
+    const sourceExt=(file.name.split('.').pop()||'bin').toLowerCase();
+    const safeInput='input_'+Date.now()+'.'+sourceExt;
+    const output='output_'+Date.now()+'.'+ext;
+
+    done.textContent='Preparando arquivo...';
+    await ffmpeg.writeFile(safeInput, await ffmpeg._fetchFile(file));
+
+    convbar.style.width='1%';
+    done.textContent='Convertendo...';
+    await ffmpeg.exec(['-y','-i',safeInput,...(argsMap[fmt]||argsMap['MP3']),output]);
+
+    const data=await ffmpeg.readFile(output);
+    const mimeMap={
+      mp3:'audio/mpeg',wav:'audio/wav',m4a:'audio/mp4',aac:'audio/aac',
+      flac:'audio/flac',ogg:'audio/ogg',wma:'audio/x-ms-wma',mp4:'video/mp4'
+    };
+    const blob=new Blob([data.buffer],{type:mimeMap[ext]||'application/octet-stream'});
+
+    if(convertedBlobUrl) URL.revokeObjectURL(convertedBlobUrl);
+    convertedBlobUrl=URL.createObjectURL(blob);
+
+    const baseName=file.name.replace(/\.[^/.]+$/,'')||'arquivo';
+    convertedName.textContent=baseName+'_convertido.'+ext;
+    convertedMeta.textContent='Conversão real concluída • '+fmt+' • '+formatBytes(blob.size);
+
+    convbar.style.width='100%';
+    done.textContent='Conversão concluída com sucesso.';
+    done.classList.add('show');
+    downloadCard.classList.add('show');
+    downloadCard.scrollIntoView({behavior:'smooth',block:'center'});
+
+    try{ await ffmpeg.deleteFile(safeInput); }catch(e){}
+    try{ await ffmpeg.deleteFile(output); }catch(e){}
+  }catch(err){
+    console.error(err);
+    convbar.style.width='0%';
+    done.textContent='Falha na conversão: '+(err && err.message ? err.message : err);
+    done.classList.add('show');
+  }
 }
+
+function formatBytes(bytes){
+  if(bytes<1024) return bytes+' B';
+  if(bytes<1024*1024) return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/(1024*1024)).toFixed(1)+' MB';
+}
+
 function resetConverter(){
   done.classList.remove('show');
   downloadCard.classList.remove('show');
   convbar.style.width='0%';
+  if(convertedBlobUrl){
+    URL.revokeObjectURL(convertedBlobUrl);
+    convertedBlobUrl=null;
+  }
+  document.getElementById('convfile').value='';
+  convname.value='Selecionar arquivo...';
 }
+
 function downloadConvertedPreview(){
-  const name=convertedName.textContent||'arquivo_convertido.mp3';
-  const content='Prévia do Lírico AI: este arquivo representa o fluxo de download. A conversão real será feita pelo FFmpeg no aplicativo instalado.';
-  const blob=new Blob([content],{type:'application/octet-stream'});
-  const url=URL.createObjectURL(blob);
+  if(!convertedBlobUrl){
+    alert('Converta um arquivo primeiro.');
+    return;
+  }
   const a=document.createElement('a');
-  a.href=url;
-  a.download=name;
+  a.href=convertedBlobUrl;
+  a.download=convertedName.textContent||'arquivo_convertido.mp3';
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-</script></body></html>
+}</script></body></html>
