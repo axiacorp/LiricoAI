@@ -286,10 +286,10 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Buzz-${{ runner.os }}-${{ runner.arch }}
+          name: LiricoAI-${{ runner.os }}-${{ runner.arch }}
           path: |
-            dist/Buzz*-windows.exe
-            dist/Buzz*-mac.dmg
+            dist/Lírico AI*-windows.exe
+            dist/LiricoAI*-mac.dmg
             dist/Buzz*.AppImage
 
   build_wheels:

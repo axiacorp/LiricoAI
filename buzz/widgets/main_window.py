@@ -138,6 +138,9 @@ class MainWindow(QMainWindow):
         self.menu_bar.import_folder_action_triggered.connect(
             self.on_import_folder_action_triggered
         )
+        self.menu_bar.media_converter_action_triggered.connect(
+            self.on_media_converter_action_triggered
+        )
         self.menu_bar.shortcuts_changed.connect(self.on_shortcuts_changed)
         self.menu_bar.openai_api_key_changed.connect(
             self.on_openai_access_token_changed
@@ -340,6 +343,14 @@ class MainWindow(QMainWindow):
         url = ImportURLDialog.prompt(parent=self)
         if url is not None:
             self.open_file_transcriber_widget(url=url)
+
+    def on_media_converter_action_triggered(self):
+        from buzz.widgets.media_converter_dialog import MediaConverterDialog
+
+        self.media_converter_dialog = MediaConverterDialog(self)
+        self.media_converter_dialog.show()
+        self.media_converter_dialog.raise_()
+        self.media_converter_dialog.activateWindow()
 
     def on_import_folder_action_triggered(self):
         last_folder = self.settings.value(Settings.Key.LAST_IMPORT_FOLDER, "")

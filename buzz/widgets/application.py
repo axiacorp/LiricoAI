@@ -8,11 +8,12 @@ import darkdetect
 
 from posthog import Posthog
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QApplication, QStyleFactory
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QFont, QPixmap
+from PyQt6.QtWidgets import QApplication, QSplashScreen, QStyleFactory
 
 from buzz.__version__ import VERSION
+from buzz.assets import get_path
 from buzz.db.dao.transcription_dao import TranscriptionDAO
 from buzz.db.dao.transcription_segment_dao import TranscriptionSegmentDAO
 from buzz.db.db import setup_app_db
@@ -32,6 +33,18 @@ class Application(QApplication):
         self.setApplicationName(APP_NAME)
         self.setApplicationVersion(VERSION)
         self.hide_main_window = False
+
+        # Official Lírico AI startup branding. Keep the splash visible for four
+        # seconds while the application initializes, then reveal the main window.
+        splash_pixmap = QPixmap(get_path("assets/liricoai-logo.png"))
+        if not splash_pixmap.isNull():
+            splash_pixmap = splash_pixmap.scaledToWidth(
+                720, Qt.TransformationMode.SmoothTransformation
+            )
+        self.splash = QSplashScreen(splash_pixmap)
+        self.splash.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
+        self.splash.show()
+        self.processEvents()
 
         if darkdetect.isDark():
             self.styleHints().setColorScheme(Qt.ColorScheme.Dark)
@@ -92,14 +105,26 @@ class Application(QApplication):
             })
             threading.Thread(target=posthog.shutdown, daemon=True).start()
 
-        logging.debug(f"Launching Buzz: {VERSION}, " 
+        QTimer.singleShot(4000, self._finish_startup)
+
+        logging.debug(f"Launching LiricoAI: {VERSION}, " 
                       f"locale: {locale.getlocale()}, "
                       f"system: {platform.system()}, "
                       f"release: {platform.release()}, "
                       f"machine: {platform.machine()}, "
                       f"version: {platform.version()}, ")
 
+    def _finish_startup(self):
+        if hasattr(self, "splash"):
+            self.splash.close()
+        if not self.hide_main_window:
+            self.window.show()
+
     def show_main_window(self):
+        # During normal GUI startup the splash owns the first four seconds.
+        # Headless/CLI flows can still suppress the window through hide_main_window.
+        if hasattr(self, "splash") and self.splash.isVisible():
+            return
         if not self.hide_main_window:
             self.window.show()
 

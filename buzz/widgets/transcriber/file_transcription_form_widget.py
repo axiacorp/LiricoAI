@@ -85,6 +85,48 @@ class FileTranscriptionFormWidget(QWidget):
         self.mode_combo_box.currentIndexChanged.connect(self.on_mode_changed)
         simple_form.addRow("Modo:", self.mode_combo_box)
 
+        self.offline_engine_combo_box = QComboBox(self)
+        self.offline_engine_combo_box.addItem("Whisper.cpp", ModelType.WHISPER_CPP.value)
+        self.offline_engine_combo_box.addItem("OpenAI Whisper local", ModelType.WHISPER.value)
+        self.offline_engine_combo_box.addItem("Faster Whisper", ModelType.FASTER_WHISPER.value)
+        saved_offline_engine = self.settings.value(
+            Settings.Key.FILE_TRANSCRIBER_OFFLINE_ENGINE,
+            ModelType.WHISPER_CPP.value,
+        )
+        offline_engine_index = self.offline_engine_combo_box.findData(saved_offline_engine)
+        self.offline_engine_combo_box.setCurrentIndex(
+            offline_engine_index if offline_engine_index >= 0 else 0
+        )
+        self.offline_engine_combo_box.currentIndexChanged.connect(
+            self.on_offline_engine_changed
+        )
+        simple_form.addRow("Motor offline:", self.offline_engine_combo_box)
+
+        self.offline_model_size_combo_box = QComboBox(self)
+        for size in (
+            WhisperModelSize.TINY,
+            WhisperModelSize.BASE,
+            WhisperModelSize.SMALL,
+            WhisperModelSize.MEDIUM,
+            WhisperModelSize.LARGEV2,
+            WhisperModelSize.LARGEV3,
+            WhisperModelSize.LARGEV3TURBO,
+        ):
+            self.offline_model_size_combo_box.addItem(size.value, size.value)
+        saved_offline_size = self.settings.value(
+            Settings.Key.FILE_TRANSCRIBER_OFFLINE_MODEL_SIZE,
+            WhisperModelSize.LARGEV3TURBO.value,
+        )
+        offline_size_index = self.offline_model_size_combo_box.findData(saved_offline_size)
+        self.offline_model_size_combo_box.setCurrentIndex(
+            offline_size_index if offline_size_index >= 0 else
+            self.offline_model_size_combo_box.findData(WhisperModelSize.LARGEV3TURBO.value)
+        )
+        self.offline_model_size_combo_box.currentIndexChanged.connect(
+            self.on_offline_model_size_changed
+        )
+        simple_form.addRow("Modelo offline:", self.offline_model_size_combo_box)
+
         self.content_type_combo_box = QComboBox(self)
         self.content_type_combo_box.addItem("Geral", "general")
         self.content_type_combo_box.addItem("Aula", "class")
@@ -168,31 +210,46 @@ class FileTranscriptionFormWidget(QWidget):
         mode = self._current_mode()
 
         if mode == "auto":
+            # Automatic mode is intentionally OpenAI-only. Never silently fall
+            # back to a local Whisper model: users choosing the recommended mode
+            # must get the same AI transcription pipeline every time.
+            self.transcription_options.model = TranscriptionModel(
+                model_type=ModelType.OPEN_AI_WHISPER_API,
+                whisper_model_size=None,
+            )
             if self.transcription_options.openai_access_token:
-                self.transcription_options.model = TranscriptionModel(
-                    model_type=ModelType.OPEN_AI_WHISPER_API,
-                    whisper_model_size=None,
-                )
                 self.mode_status_label.setText(
-                    "Alta precisão online ativada. O Lírico AI usará o modelo "
-                    "de transcrição da OpenAI configurado no aplicativo."
+                    "IA OpenAI ativada. O Lírico AI enviará o áudio para o "
+                    "modelo de transcrição da OpenAI."
                 )
             else:
-                self.transcription_options.model = TranscriptionModel(
-                    model_type=ModelType.WHISPER_CPP,
-                    whisper_model_size=WhisperModelSize.LARGEV3TURBO,
-                )
                 self.mode_status_label.setText(
-                    "Sem chave da OpenAI: o Lírico AI usará automaticamente "
-                    "Large-V3-Turbo no próprio computador."
+                    "IA OpenAI obrigatória. Configure uma chave da OpenAI para "
+                    "iniciar a transcrição."
                 )
         elif mode == "offline":
+            try:
+                offline_engine = ModelType(
+                    self.offline_engine_combo_box.currentData()
+                    or ModelType.WHISPER_CPP.value
+                )
+            except ValueError:
+                offline_engine = ModelType.WHISPER_CPP
+            try:
+                offline_size = WhisperModelSize(
+                    self.offline_model_size_combo_box.currentData()
+                    or WhisperModelSize.LARGEV3TURBO.value
+                )
+            except ValueError:
+                offline_size = WhisperModelSize.LARGEV3TURBO
+
             self.transcription_options.model = TranscriptionModel(
-                model_type=ModelType.WHISPER_CPP,
-                whisper_model_size=WhisperModelSize.LARGEV3TURBO,
+                model_type=offline_engine,
+                whisper_model_size=offline_size,
             )
             self.mode_status_label.setText(
-                "Modo offline: Large-V3-Turbo, sem enviar o áudio para a internet."
+                f"Modo offline: {offline_engine.value} · {offline_size.value}. "
+                "O áudio permanece no computador."
             )
         else:
             self.mode_status_label.setText(
@@ -220,7 +277,11 @@ class FileTranscriptionFormWidget(QWidget):
             )
 
     def _update_simple_mode_visibility(self):
-        advanced = self._current_mode() == "advanced"
+        mode = self._current_mode()
+        advanced = mode == "advanced"
+        offline = mode == "offline"
+        self.offline_engine_combo_box.setVisible(offline)
+        self.offline_model_size_combo_box.setVisible(offline)
         self.transcription_options_group_box.setVisible(advanced)
         self.word_level_timings_checkbox.setVisible(advanced)
         self.extract_speech_checkbox.setVisible(advanced)
@@ -231,6 +292,22 @@ class FileTranscriptionFormWidget(QWidget):
         )
         self._apply_mode_to_options()
         self._update_simple_mode_visibility()
+
+    def on_offline_engine_changed(self, _index: int):
+        self.settings.set_value(
+            Settings.Key.FILE_TRANSCRIBER_OFFLINE_ENGINE,
+            self.offline_engine_combo_box.currentData(),
+        )
+        if self._current_mode() == "offline":
+            self._apply_mode_to_options()
+
+    def on_offline_model_size_changed(self, _index: int):
+        self.settings.set_value(
+            Settings.Key.FILE_TRANSCRIBER_OFFLINE_MODEL_SIZE,
+            self.offline_model_size_combo_box.currentData(),
+        )
+        if self._current_mode() == "offline":
+            self._apply_mode_to_options()
 
     def on_content_type_changed(self, _index: int):
         content_type = self.content_type_combo_box.currentData() or "general"

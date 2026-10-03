@@ -7,6 +7,9 @@ from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QPushButton,
+    QInputDialog,
+    QLineEdit,
+    QMessageBox,
 )
 
 from buzz.dialogs import show_model_download_error_dialog
@@ -14,7 +17,7 @@ from buzz.locale import _
 from buzz.model_loader import ModelDownloader, WhisperModelSize, ModelType
 from buzz.paths import file_path_as_title
 from buzz.settings.settings import Settings
-from buzz.store.keyring_store import get_password, Key
+from buzz.store.keyring_store import get_password, set_password, Key
 from buzz.transcriber.transcriber import (
     FileTranscriptionOptions,
     TranscriptionOptions,
@@ -116,6 +119,45 @@ class FileTranscriberWidget(QWidget):
         self.settings.settings.endGroup()
 
     def on_click_run(self):
+        # Recommended mode is OpenAI-only. If no key is available (including
+        # automatic migration from the old Buzz keychain), collect it once and
+        # store it securely in the OS keyring before starting.
+        if (
+            self.transcription_options.model.model_type == ModelType.OPEN_AI_WHISPER_API
+            and not self.transcription_options.openai_access_token
+        ):
+            api_key, accepted = QInputDialog.getText(
+                self,
+                "Ativar IA OpenAI",
+                "Informe sua chave da OpenAI. Ela será armazenada com segurança "
+                "no chaveiro do sistema e usada automaticamente nas próximas transcrições:",
+                QLineEdit.EchoMode.Password,
+            )
+            api_key = api_key.strip()
+            if not accepted or not api_key:
+                QMessageBox.warning(
+                    self,
+                    "IA OpenAI necessária",
+                    "A transcrição não foi iniciada porque o modo recomendado "
+                    "usa obrigatoriamente a IA da OpenAI.",
+                )
+                return
+
+            try:
+                set_password(Key.OPENAI_API_KEY, api_key)
+            except Exception as exc:
+                logging.error("Unable to save OpenAI API key: %s", exc)
+                QMessageBox.critical(
+                    self,
+                    "Erro ao salvar chave",
+                    "Não foi possível salvar a chave da OpenAI no chaveiro do sistema.",
+                )
+                return
+
+            self.transcription_options.openai_access_token = api_key
+            self.openai_access_token_changed.emit(api_key)
+            self.form_widget._apply_mode_to_options(emit=False)
+
         self.run_button.setDisabled(True)
 
         model_path = self.transcription_options.model.get_local_model_path()
