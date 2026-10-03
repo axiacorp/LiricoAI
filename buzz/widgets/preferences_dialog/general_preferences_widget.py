@@ -128,10 +128,10 @@ class GeneralPreferencesWidget(QWidget):
         layout.addRow(_("OpenAI base url"), self.custom_openai_base_url_line_edit)
 
         self.openai_api_model = self.settings.value(
-            key=Settings.Key.OPENAI_API_MODEL, default_value="gpt-transcribe"
+            key=Settings.Key.OPENAI_API_MODEL, default_value="gpt-4o-transcribe"
         )
         if not self.custom_openai_base_url and self.openai_api_model == "whisper-1":
-            self.openai_api_model = "gpt-transcribe"
+            self.openai_api_model = "gpt-4o-transcribe"
             self.settings.set_value(
                 Settings.Key.OPENAI_API_MODEL, self.openai_api_model
             )
@@ -141,7 +141,7 @@ class GeneralPreferencesWidget(QWidget):
             self.on_openai_api_model_changed
         )
         self.openai_api_model_line_edit.setMinimumWidth(200)
-        self.openai_api_model_line_edit.setPlaceholderText("gpt-transcribe")
+        self.openai_api_model_line_edit.setPlaceholderText("gpt-4o-transcribe")
         layout.addRow(_("OpenAI transcription model"), self.openai_api_model_line_edit)
 
         default_export_file_name = self.settings.get_default_export_file_template()
