@@ -92,7 +92,7 @@ class Application(QApplication):
             })
             threading.Thread(target=posthog.shutdown, daemon=True).start()
 
-        logging.debug(f"Launching Buzz: {VERSION}, " 
+        logging.debug(f"Launching LiricoAI: {VERSION}, " 
                       f"locale: {locale.getlocale()}, "
                       f"system: {platform.system()}, "
                       f"release: {platform.release()}, "
