@@ -8,7 +8,7 @@ mac_dmg_path := ./dist/LiricoAI-${version}-mac.dmg
 bundle_windows: dist/LiricoAI
 	# Sanity-check: both halves of OpenSSL must ship together, otherwise users with
 	# a system OpenSSL on PATH hit "CRYPTO_calloc not found" from a mismatched pair.
-	powershell -NoProfile -Command "if (-not (Get-ChildItem -Path 'dist\Buzz' -Recurse -Filter 'libssl-3-x64.dll' -ErrorAction SilentlyContinue)) { Write-Error 'Missing libssl-3-x64.dll in dist\Buzz'; exit 1 }; if (-not (Get-ChildItem -Path 'dist\Buzz' -Recurse -Filter 'libcrypto-3-x64.dll' -ErrorAction SilentlyContinue)) { Write-Error 'Missing libcrypto-3-x64.dll in dist\Buzz'; exit 1 }"
+	powershell -NoProfile -Command "if (-not (Get-ChildItem -Path 'dist\LiricoAI' -Recurse -Filter 'libssl-3-x64.dll' -ErrorAction SilentlyContinue)) { Write-Error 'Missing libssl-3-x64.dll in dist\LiricoAI'; exit 1 }; if (-not (Get-ChildItem -Path 'dist\LiricoAI' -Recurse -Filter 'libcrypto-3-x64.dll' -ErrorAction SilentlyContinue)) { Write-Error 'Missing libcrypto-3-x64.dll in dist\LiricoAI'; exit 1 }"
 	iscc installer.iss
 
 bundle_mac: dist/LiricoAI.app codesign_all_mac zip_mac notarize_zip staple_app_mac dmg_mac
@@ -55,6 +55,7 @@ benchmarks: buzz/whisper_cpp ctc_forced_aligner_ext
 	pytest -s -vv --benchmark-only --benchmark-json benchmarks.json
 
 dist/LiricoAI dist/LiricoAI.app: buzz/whisper_cpp
+	uv run python scripts/generate_lirico_icons.py
 	pyinstaller --noconfirm LiricoAI.spec
 
 dist/Buzz: buzz/whisper_cpp
