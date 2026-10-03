@@ -292,7 +292,8 @@ async function ensureFFmpeg(){
   const base='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
   await ffmpeg.load({
     coreURL: await toBlobURL(base+'/ffmpeg-core.js','text/javascript'),
-    wasmURL: await toBlobURL(base+'/ffmpeg-core.wasm','application/wasm')
+    wasmURL: await toBlobURL(base+'/ffmpeg-core.wasm','application/wasm'),
+    classWorkerURL: window.location.origin + '/LiricoAI/ffmpeg-worker.js'
   });
 
   ffmpeg._fetchFile=fetchFile;
@@ -312,8 +313,10 @@ async function convert(){
   done.classList.remove('show');
   downloadCard.classList.remove('show');
   convbar.style.width='0%';
-  done.textContent='Carregando o mecanismo de conversão...';
+  done.textContent='Carregando o FFmpeg pela primeira vez... isso pode levar alguns segundos.';
   done.classList.add('show');
+  const convertButton=document.querySelector('#conv .go');
+  if(convertButton){convertButton.disabled=true;convertButton.textContent='Convertendo...';}
 
   try{
     const ffmpeg=await ensureFFmpeg();
@@ -369,6 +372,9 @@ async function convert(){
     convbar.style.width='0%';
     done.textContent='Falha na conversão: '+(err && err.message ? err.message : err);
     done.classList.add('show');
+  }finally{
+    const convertButton=document.querySelector('#conv .go');
+    if(convertButton){convertButton.disabled=false;convertButton.textContent='Converter';}
   }
 }
 
