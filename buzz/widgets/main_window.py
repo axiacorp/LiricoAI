@@ -44,6 +44,7 @@ from buzz.transcriber.transcriber import (
 from buzz.widgets.icon import BUZZ_ICON_PATH
 from buzz.widgets.import_url_dialog import ImportURLDialog
 from buzz.widgets.main_window_toolbar import MainWindowToolbar
+from buzz.widgets.modern_dashboard import ModernDashboard
 from buzz.widgets.menu_bar import MenuBar
 from buzz.widgets.preferences_dialog.models.preferences import Preferences
 from buzz.widgets.transcriber.file_transcriber_widget import FileTranscriberWidget
@@ -119,7 +120,7 @@ class MainWindow(QMainWindow):
             self.on_stop_transcription_action_triggered
         )
         self.addToolBar(self.toolbar)
-        self.toolbar.update_action_triggered.connect(self.on_update_action_triggered)
+        # The modern Lírico AI shell replaces the legacy icon toolbar visually,\n        # while keeping its actions alive for shortcuts and existing integrations.\n        self.toolbar.hide()\n        self.toolbar.update_action_triggered.connect(self.on_update_action_triggered)
         self.setUnifiedTitleAndToolBarOnMac(True)
 
         self.preferences = self.load_preferences(settings=self.settings)
@@ -157,7 +158,16 @@ class MainWindow(QMainWindow):
             self.on_transcriptions_updated
         )
 
-        self.setCentralWidget(self.table_widget)
+        self.dashboard = ModernDashboard(
+            history_widget=self.table_widget,
+            on_select_file=self.on_new_transcription_action_triggered,
+            on_record=self.toolbar.on_record_action_triggered,
+            on_preferences=self.menu_bar.on_preferences_action_triggered,
+            parent=self,
+        )
+        self.setCentralWidget(self.dashboard)
+        self.setMinimumSize(1180, 760)
+        self.resize(1380, 900)
 
         # Start transcriber thread
         self.transcriber_thread = QThread()

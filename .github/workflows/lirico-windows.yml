@@ -1,0 +1,86 @@
+name: Lírico AI Windows Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "ui/macos-modern-dashboard"
+    paths:
+      - "buzz/**"
+      - "Buzz.spec"
+      - "installer.iss"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "Makefile"
+      - ".github/workflows/lirico-windows.yml"
+
+concurrency:
+  group: lirico-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    name: Build Lírico AI for Windows x64
+    runs-on: windows-latest
+    env:
+      BUZZ_DISABLE_TELEMETRY: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        shell: pwsh
+        run: python -m pip install --upgrade uv
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: uv sync --frozen
+
+      - name: Install FFmpeg and Inno Setup
+        shell: pwsh
+        run: |
+          choco install ffmpeg -y
+          choco install innosetup -y
+          echo "C:\Program Files (x86)\Inno Setup 6" >> $env:GITHUB_PATH
+
+      - name: Build whisper.cpp
+        shell: bash
+        run: uv run make buzz/whisper_cpp
+
+      - name: Build application
+        shell: pwsh
+        run: uv run pyinstaller --noconfirm Buzz.spec
+
+      - name: Verify application bundle
+        shell: pwsh
+        run: |
+          if (!(Test-Path "dist\LiricoAI\LiricoAI.exe")) { throw "LiricoAI.exe não foi gerado" }
+          Get-Item "dist\LiricoAI\LiricoAI.exe"
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist\LiricoAI\*" -DestinationPath "dist\LiricoAI-Windows-x64-portable.zip" -Force
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiricoAI-Windows-x64
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/Lírico AI-*-windows.exe
+            dist/LiricoAI-Windows-x64-portable.zip

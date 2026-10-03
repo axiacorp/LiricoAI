@@ -8,7 +8,7 @@ import darkdetect
 
 from posthog import Posthog
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication, QStyleFactory
 
@@ -21,6 +21,7 @@ from buzz.settings.settings import APP_NAME, Settings
 
 from buzz.transcriber.transcriber import FileTranscriptionTask
 from buzz.widgets.main_window import MainWindow
+from buzz.widgets.splash_screen import LiricoSplash
 
 
 class Application(QApplication):
@@ -32,6 +33,7 @@ class Application(QApplication):
         self.setApplicationName(APP_NAME)
         self.setApplicationVersion(VERSION)
         self.hide_main_window = False
+        self.splash = None
 
         if darkdetect.isDark():
             self.styleHints().setColorScheme(Qt.ColorScheme.Dark)
@@ -100,8 +102,22 @@ class Application(QApplication):
                       f"version: {platform.version()}, ")
 
     def show_main_window(self):
-        if not self.hide_main_window:
-            self.window.show()
+        if self.hide_main_window:
+            return
+
+        self.splash = LiricoSplash()
+        self.splash.show_centered()
+        QTimer.singleShot(4000, self._finish_startup)
+
+    def _finish_startup(self):
+        if self.splash is not None:
+            self.splash.close()
+            self.splash.deleteLater()
+            self.splash = None
+
+        self.window.show()
+        self.window.raise_()
+        self.window.activateWindow()
 
     def add_task(self, task: FileTranscriptionTask, quit_on_complete: bool = False):
         self.window.quit_on_complete = quit_on_complete
