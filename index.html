@@ -13,7 +13,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 .top{display:flex;align-items:center;gap:10px;padding:0 15px;border-bottom:1px solid var(--line)}.dots{display:flex;gap:7px}.dots i{width:11px;height:11px;border-radius:50%;display:block}.dots i:nth-child(1){background:#ff5f57}.dots i:nth-child(2){background:#febc2e}.dots i:nth-child(3){background:#28c840}.top img{width:24px;height:24px;border-radius:6px}.pill{margin-left:auto;background:#fff0e5;color:var(--o);font-size:10px;font-weight:800;padding:6px 9px;border-radius:7px}
 .shell{display:grid;grid-template-columns:240px 1fr;min-height:0}.side{background:var(--c);color:#fff;padding:20px 16px;display:flex;flex-direction:column;gap:14px}.brand img{width:180px;max-width:100%}.primary,.go{border:0;background:linear-gradient(135deg,var(--o),var(--o2));color:#fff;border-radius:10px;padding:12px 14px;font-weight:800}.nav{border:0;background:transparent;color:#d8d0ca;text-align:left;padding:11px 12px;border-radius:8px}.nav:hover,.nav.active{background:#3a332f;color:#fff}.grow{flex:1}
 .main{overflow:auto;background:#fbfaf8;padding:34px 40px}.ey{color:var(--o);font-size:11px;font-weight:900;letter-spacing:.12em;margin:0 0 7px}h1{font-size:32px;margin:0 0 6px}.sub{color:var(--m);margin:0 0 24px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}.card h2{font-size:17px;margin:0 0 14px}.drop{border:1.5px dashed #efb890;background:#fffaf6;border-radius:12px;padding:28px;text-align:center}.drop strong{display:block;margin-bottom:5px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field label{display:block;font-size:11px;font-weight:800;margin-bottom:7px}select,input[type=text]{width:100%;height:44px;border:1px solid var(--line);border-radius:9px;background:#fff;padding:0 12px}
-.modebox{display:none;margin-top:15px;padding-top:15px;border-top:1px solid var(--line)}.modebox.show{display:block}.paid{background:#fff7ed;border:1px solid #ffd4ad;border-radius:12px;padding:16px;margin-top:12px}.paidtitle{display:flex;align-items:center;gap:8px;font-weight:800;color:#c65300}.paidbadge{background:linear-gradient(135deg,var(--o),var(--o2));color:#fff;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;letter-spacing:.05em}.status{display:flex;gap:8px;align-items:center;background:#eef8f2;border:1px solid #cdebd9;padding:12px;border-radius:10px;font-size:12px}.green{width:9px;height:9px;border-radius:50%;background:var(--g)}.note{font-size:12px;color:var(--m);margin-top:9px}
+.modebox{display:none;margin-top:15px;padding-top:15px;border-top:1px solid var(--line)}.modebox.show{display:block}.paid{background:#fff7ed;border:1px solid #ffd4ad;border-radius:12px;padding:16px;margin-top:12px}.paidtitle{display:flex;align-items:center;gap:8px;font-weight:800;color:#c65300}.paidbadge{background:linear-gradient(135deg,var(--o),var(--o2));color:#fff;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;letter-spacing:.05em}.modeldesc{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fcfbfa}.modeldesc strong{display:block;margin-bottom:4px}.payrow{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px}.paycopy{font-size:12px;color:#6f5747;line-height:1.5}.paybtn{border:0;background:linear-gradient(135deg,var(--o),var(--o2));color:#fff;border-radius:9px;padding:11px 14px;font-weight:800;white-space:nowrap}.status{display:flex;gap:8px;align-items:center;background:#eef8f2;border:1px solid #cdebd9;padding:12px;border-radius:10px;font-size:12px}.green{width:9px;height:9px;border-radius:50%;background:var(--g)}.note{font-size:12px;color:var(--m);margin-top:9px}
 .chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:8px}.chip.active{border-color:var(--o);color:var(--o);background:#fff4ec;font-weight:700}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.ghost{border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px 15px}
 .converter{display:none}.converter.show{display:block}.transcriber.hide{display:none}.bar{height:8px;background:#eee5dd;border-radius:999px;overflow:hidden;margin:18px 0}.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--o),var(--o2));width:0}.ok{display:none;background:#eef8f2;border:1px solid #cdebd9;color:#17683e;padding:12px;border-radius:9px}.ok.show{display:block}
 .hist{margin-top:20px}.histitem{display:flex;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px}.badge{background:#fff0e5;color:var(--o);padding:5px 8px;border-radius:6px;font-size:11px;font-weight:800}.footer{text-align:center;color:#968b83;font-size:11px;margin-top:20px}
@@ -28,42 +28,95 @@ button,input,select{font:inherit}button{cursor:pointer}
 <aside class="side"><div class="brand"><img src="https://raw.githubusercontent.com/axiacorp/LiricoAI/fix/liricoai-packaging/buzz/assets/liricoai-logo.png"></div><button class="primary" onclick="showTrans()">+ <span class="txt">Nova transcrição</span></button><button class="nav active" onclick="showTrans()">◷ <span class="txt">Transcrever</span></button><button class="nav" onclick="showConv()">⇄ <span class="txt">Converter mídia</span></button><button class="nav">▤ <span class="txt">Histórico</span></button><div class="grow"></div><small class="txt" style="color:#aaa09a">Lírico AI • prévia online</small></aside>
 <main class="main">
 <section id="trans" class="transcriber">
-<p class="ey">NOVA TRANSCRIÇÃO</p><h1>Preparar arquivo</h1><p class="sub">Escolha o arquivo, o transcritor e o tipo de conteúdo.</p>
+<p class="ey">NOVA TRANSCRIÇÃO</p><h1>Preparar arquivo</h1><p class="sub">Escolha o arquivo, o modelo de transcrição, o idioma e o tipo de conteúdo.</p>
 <div class="card"><h2>1. Selecionar áudio ou vídeo</h2><div class="drop" onclick="file.click()"><strong id="fname">Arraste um arquivo ou clique para selecionar</strong><span>MP3, M4A, WAV, MP4, MOV, MKV, WMA e outros</span><input id="file" type="file" hidden onchange="fname.textContent=this.files[0]?.name||'Selecionar arquivo'"></div></div>
 <div class="card"><h2>2. Configurar transcrição</h2>
-<div class="grid"><div class="field"><label>Transcritor</label><select id="mode" onchange="modeChange()">
-<option value="whispercpp">Whisper.cpp</option>
-<option value="whisperlocal">OpenAI Whisper local</option>
-<option value="faster">Faster Whisper</option>
-<option value="huggingface">Hugging Face</option>
-<option value="advanced">Avançado — IA OpenAI (pago)</option>
-</select></div><div class="field"><label>Idioma</label><select><option>Português (Brasil)</option><option>Detectar automaticamente</option></select></div></div>
-
-<div id="whispercppBox" class="modebox show">
-  <div class="grid"><div class="field"><label>Modelo Whisper.cpp</label><select><option>large-v3-turbo</option><option>large-v3</option><option>large-v2</option><option>medium</option><option>small</option><option>base</option><option>tiny</option></select></div><div class="field"><label>Execução</label><select><option>Local — neste computador</option></select></div></div>
-  <div class="status"><span class="green"></span><strong>Whisper.cpp disponível</strong><span>• sem cobrança de IA</span></div>
+<div class="grid">
+  <div class="field">
+    <label>Modelo de transcrição</label>
+    <select id="model" onchange="modelChange()">
+      <optgroup label="Whisper.cpp">
+        <option value="cpp-turbo">Whisper.cpp — Large V3 Turbo</option>
+        <option value="cpp-v3">Whisper.cpp — Large V3</option>
+        <option value="cpp-v2">Whisper.cpp — Large V2</option>
+        <option value="cpp-medium">Whisper.cpp — Medium</option>
+        <option value="cpp-small">Whisper.cpp — Small</option>
+        <option value="cpp-base">Whisper.cpp — Base</option>
+        <option value="cpp-tiny">Whisper.cpp — Tiny</option>
+      </optgroup>
+      <optgroup label="OpenAI Whisper local">
+        <option value="local-v3">OpenAI Whisper local — Large V3</option>
+        <option value="local-v2">OpenAI Whisper local — Large V2</option>
+        <option value="local-medium">OpenAI Whisper local — Medium</option>
+        <option value="local-small">OpenAI Whisper local — Small</option>
+        <option value="local-base">OpenAI Whisper local — Base</option>
+        <option value="local-tiny">OpenAI Whisper local — Tiny</option>
+      </optgroup>
+      <optgroup label="Faster Whisper">
+        <option value="faster-turbo">Faster Whisper — Large V3 Turbo</option>
+        <option value="faster-v3">Faster Whisper — Large V3</option>
+        <option value="faster-v2">Faster Whisper — Large V2</option>
+        <option value="faster-medium">Faster Whisper — Medium</option>
+        <option value="faster-small">Faster Whisper — Small</option>
+        <option value="faster-base">Faster Whisper — Base</option>
+        <option value="faster-tiny">Faster Whisper — Tiny</option>
+      </optgroup>
+      <optgroup label="Hugging Face">
+        <option value="hf-parakeet">Hugging Face — Parakeet</option>
+        <option value="hf-mms">Hugging Face — MMS</option>
+        <option value="hf-vibe">Hugging Face — VibeVoice ASR</option>
+        <option value="hf-qwen">Hugging Face — Qwen ASR</option>
+        <option value="hf-custom">Hugging Face — Modelo personalizado</option>
+      </optgroup>
+      <optgroup label="Avançado">
+        <option value="openai-paid">OpenAI GPT-4o Transcribe — IA avançada (pago)</option>
+      </optgroup>
+    </select>
+  </div>
+  <div class="field">
+    <label>Idioma do áudio</label>
+    <select id="language">
+      <option>Português (Brasil)</option>
+      <option>Detectar automaticamente</option>
+      <option>Inglês</option>
+      <option>Espanhol</option>
+      <option>Francês</option>
+      <option>Alemão</option>
+      <option>Italiano</option>
+    </select>
+  </div>
 </div>
 
-<div id="whisperlocalBox" class="modebox">
-  <div class="grid"><div class="field"><label>Modelo OpenAI Whisper local</label><select><option>large-v3</option><option>large-v2</option><option>medium</option><option>small</option><option>base</option><option>tiny</option></select></div><div class="field"><label>Execução</label><select><option>Local — neste computador</option></select></div></div>
-  <div class="status"><span class="green"></span><strong>OpenAI Whisper local disponível</strong><span>• sem cobrança de API</span></div>
+<div class="grid" style="margin-top:14px">
+  <div class="field">
+    <label>Resultado</label>
+    <select id="outputLanguage">
+      <option>Transcrever no idioma original</option>
+      <option>Traduzir para Português (Brasil)</option>
+      <option>Traduzir para Inglês</option>
+      <option>Traduzir para Espanhol</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Uso</label>
+    <select disabled>
+      <option>Selecionado automaticamente conforme o modelo</option>
+    </select>
+  </div>
 </div>
 
-<div id="fasterBox" class="modebox">
-  <div class="grid"><div class="field"><label>Modelo Faster Whisper</label><select><option>large-v3-turbo</option><option>large-v3</option><option>large-v2</option><option>medium</option><option>small</option><option>base</option><option>tiny</option></select></div><div class="field"><label>Execução</label><select><option>Local — neste computador</option></select></div></div>
-  <div class="status"><span class="green"></span><strong>Faster Whisper disponível</strong><span>• sem cobrança de IA</span></div>
+<div id="modelDesc" class="modeldesc">
+  <strong>Whisper.cpp — Large V3 Turbo</strong>
+  <span class="note">Modelo local de alta qualidade e boa velocidade. Não usa créditos da OpenAI.</span>
 </div>
 
-<div id="huggingfaceBox" class="modebox">
-  <div class="field"><label>Modelo Hugging Face</label><select><option>Selecionar modelo compatível</option><option>Parakeet</option><option>MMS</option><option>VibeVoice ASR</option><option>Qwen ASR</option></select></div>
-  <div class="note">Permite modelos compatíveis/customizados. A disponibilidade depende do modelo escolhido e dos recursos do computador.</div>
-</div>
-
-<div id="advancedBox" class="modebox">
-  <div class="paid">
-    <div class="paidtitle">✦ IA OpenAI <span class="paidbadge">RECURSO PAGO</span></div>
-    <div class="note" style="margin-top:8px;color:#6f5747">No plano avançado, o Lírico AI usa a IA da OpenAI para transcrição de alta precisão. O cliente paga pelo acesso ao recurso; nenhuma chave de API é solicitada ao usuário.</div>
-    <div class="status" style="margin-top:12px"><span class="green"></span><strong>gpt-4o-transcribe</strong><span>• conectado pelo backend do Lírico AI</span></div>
+<div id="paidBox" class="paid" style="display:none">
+  <div class="paidtitle">✦ IA OpenAI <span class="paidbadge">RECURSO PAGO</span></div>
+  <div class="note" style="margin-top:8px;color:#6f5747">OpenAI GPT-4o Transcribe fica disponível no plano avançado do Lírico AI. O cliente paga pelo acesso ao recurso e não precisa informar chave de API.</div>
+  <div class="status" style="margin-top:12px"><span class="green"></span><strong>gpt-4o-transcribe</strong><span>• acesso gerenciado pelo Lírico AI</span></div>
+  <div class="payrow">
+    <div class="paycopy"><strong>Plano IA OpenAI</strong><br>Preço e franquia serão definidos antes da versão comercial.</div>
+    <button class="paybtn" onclick="alert('Prévia: aqui abrirá a tela de planos e pagamento do Lírico AI.')">Ver planos / Ativar IA</button>
   </div>
 </div>
 <div style="margin-top:18px"><label style="display:block;font-size:11px;font-weight:800;margin-bottom:8px">Tipo de conteúdo</label><div class="chips" id="types"><button class="chip" onclick="pick(this)">Geral</button><button class="chip" onclick="pick(this)">Aula</button><button class="chip active" onclick="pick(this)">Aula médica</button><button class="chip" onclick="pick(this)">Reunião</button><button class="chip" onclick="pick(this)">Entrevista</button></div><div class="status" id="med" style="margin-top:12px"><span class="green"></span><strong>Contexto médico aplicado</strong><span>Preserva termos médicos, medicamentos, doses, vias, siglas e exames.</span></div></div>
@@ -78,7 +131,42 @@ button,input,select{font:inherit}button{cursor:pointer}
 setTimeout(()=>splash.classList.add('hide'),2500);
 function showTrans(){trans.classList.remove('hide');conv.classList.remove('show')}
 function showConv(){trans.classList.add('hide');conv.classList.add('show')}
-function modeChange(){['whispercppBox','whisperlocalBox','fasterBox','huggingfaceBox','advancedBox'].forEach(x=>document.getElementById(x).classList.remove('show'));document.getElementById(mode.value+'Box').classList.add('show')}
+function modelChange(){
+  const v=document.getElementById('model').value;
+  const d=document.getElementById('modelDesc');
+  const p=document.getElementById('paidBox');
+  const names={
+    'cpp-turbo':['Whisper.cpp — Large V3 Turbo','Modelo local de alta qualidade e boa velocidade. Não usa créditos da OpenAI.'],
+    'cpp-v3':['Whisper.cpp — Large V3','Modelo local com foco em máxima qualidade dentro do Whisper.cpp.'],
+    'cpp-v2':['Whisper.cpp — Large V2','Modelo local da geração Large V2.'],
+    'cpp-medium':['Whisper.cpp — Medium','Modelo local intermediário, com menor exigência de hardware.'],
+    'cpp-small':['Whisper.cpp — Small','Modelo local leve.'],
+    'cpp-base':['Whisper.cpp — Base','Modelo local básico e rápido.'],
+    'cpp-tiny':['Whisper.cpp — Tiny','Modelo local muito leve, com menor precisão.'],
+    'local-v3':['OpenAI Whisper local — Large V3','Whisper original executado localmente, sem uso de API.'],
+    'local-v2':['OpenAI Whisper local — Large V2','Whisper original Large V2 executado localmente.'],
+    'local-medium':['OpenAI Whisper local — Medium','Whisper original Medium executado localmente.'],
+    'local-small':['OpenAI Whisper local — Small','Whisper original Small executado localmente.'],
+    'local-base':['OpenAI Whisper local — Base','Whisper original Base executado localmente.'],
+    'local-tiny':['OpenAI Whisper local — Tiny','Whisper original Tiny executado localmente.'],
+    'faster-turbo':['Faster Whisper — Large V3 Turbo','Implementação otimizada para maior velocidade com modelo Large V3 Turbo.'],
+    'faster-v3':['Faster Whisper — Large V3','Implementação otimizada do Large V3.'],
+    'faster-v2':['Faster Whisper — Large V2','Implementação otimizada do Large V2.'],
+    'faster-medium':['Faster Whisper — Medium','Implementação otimizada do modelo Medium.'],
+    'faster-small':['Faster Whisper — Small','Implementação otimizada do modelo Small.'],
+    'faster-base':['Faster Whisper — Base','Implementação otimizada do modelo Base.'],
+    'faster-tiny':['Faster Whisper — Tiny','Implementação otimizada do modelo Tiny.'],
+    'hf-parakeet':['Hugging Face — Parakeet','Modelo compatível via Hugging Face.'],
+    'hf-mms':['Hugging Face — MMS','Modelo multilíngue compatível via Hugging Face.'],
+    'hf-vibe':['Hugging Face — VibeVoice ASR','Modelo ASR compatível via Hugging Face.'],
+    'hf-qwen':['Hugging Face — Qwen ASR','Modelo ASR compatível via Hugging Face.'],
+    'hf-custom':['Hugging Face — Modelo personalizado','Permite configurar um modelo compatível/customizado.'],
+    'openai-paid':['OpenAI GPT-4o Transcribe — IA avançada','Modelo de IA na nuvem, disponível como recurso pago do Lírico AI.']
+  };
+  const info=names[v];
+  d.innerHTML='<strong>'+info[0]+'</strong><span class="note">'+info[1]+'</span>';
+  p.style.display=v==='openai-paid'?'block':'none';
+}
 function pick(b){document.querySelectorAll('#types .chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');med.style.display=b.textContent.trim()==='Aula médica'?'flex':'none'}
 function convert(){done.classList.remove('show');let v=0;let t=setInterval(()=>{v+=10;convbar.style.width=v+'%';if(v>=100){clearInterval(t);done.classList.add('show')}},90)}
 </script></body></html>
