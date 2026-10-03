@@ -16,7 +16,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 .modebox{display:none;margin-top:15px;padding-top:15px;border-top:1px solid var(--line)}.modebox.show{display:block}.paid{background:#fff7ed;border:1px solid #ffd4ad;border-radius:12px;padding:16px;margin-top:12px}.paidtitle{display:flex;align-items:center;gap:8px;font-weight:800;color:#c65300}.paidbadge{background:linear-gradient(135deg,var(--o),var(--o2));color:#fff;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;letter-spacing:.05em}.modeldesc{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fcfbfa}.modeldesc strong{display:block;margin-bottom:4px}.payrow{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px}.paycopy{font-size:12px;color:#6f5747;line-height:1.5}.paybtn{border:0;background:linear-gradient(135deg,var(--o),var(--o2));color:#fff;border-radius:9px;padding:11px 14px;font-weight:800;white-space:nowrap}.status{display:flex;gap:8px;align-items:center;background:#eef8f2;border:1px solid #cdebd9;padding:12px;border-radius:10px;font-size:12px}.green{width:9px;height:9px;border-radius:50%;background:var(--g)}.note{font-size:12px;color:var(--m);margin-top:9px}
 .chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:8px}.chip.active{border-color:var(--o);color:var(--o);background:#fff4ec;font-weight:700}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.ghost{border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px 15px}
 .converter{display:none}.converter.show{display:block}.transcriber.hide{display:none}.bar{height:8px;background:#eee5dd;border-radius:999px;overflow:hidden;margin:18px 0}.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--o),var(--o2));width:0}.ok{display:none;background:#eef8f2;border:1px solid #cdebd9;color:#17683e;padding:12px;border-radius:9px}.ok.show{display:block}
-.hist{margin-top:20px}.histitem{display:flex;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px}.badge{background:#fff0e5;color:var(--o);padding:5px 8px;border-radius:6px;font-size:11px;font-weight:800}.footer{text-align:center;color:#968b83;font-size:11px;margin-top:20px}
+.progresspanel{display:none;margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}.progresspanel.show{display:block}.progresshead{display:flex;align-items:center;gap:12px}.spinner{width:34px;height:34px;border:4px solid #f0e4da;border-top-color:var(--o);border-radius:50%;animation:spin .85s linear infinite}.progressmeta{color:var(--m);font-size:12px;margin-top:2px}.progressbar{height:10px;background:#eee4dc;border-radius:999px;overflow:hidden;margin:16px 0 8px}.progressbar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--o),var(--o2));transition:width .25s ease}.progressline{display:flex;justify-content:space-between;gap:12px;font-size:12px}.resultpanel{display:none;margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}.resultpanel.show{display:block}.resulttext{background:#fcfbfa;border:1px solid var(--line);border-radius:10px;padding:16px;line-height:1.6;margin-top:14px}@keyframes spin{to{transform:rotate(360deg)}}.hist{margin-top:20px}.histitem{display:flex;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px}.badge{background:#fff0e5;color:var(--o);padding:5px 8px;border-radius:6px;font-size:11px;font-weight:800}.footer{text-align:center;color:#968b83;font-size:11px;margin-top:20px}
 @media(max-width:850px){.shell{grid-template-columns:72px 1fr}.side{padding:14px 9px}.brand img{width:42px;height:42px;object-fit:cover;object-position:left;border-radius:8px}.side .txt{display:none}.main{padding:22px 16px}.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -120,7 +120,41 @@ button,input,select{font:inherit}button{cursor:pointer}
   </div>
 </div>
 <div style="margin-top:18px"><label style="display:block;font-size:11px;font-weight:800;margin-bottom:8px">Tipo de conteúdo</label><div class="chips" id="types"><button class="chip" onclick="pick(this)">Geral</button><button class="chip" onclick="pick(this)">Aula</button><button class="chip active" onclick="pick(this)">Aula médica</button><button class="chip" onclick="pick(this)">Reunião</button><button class="chip" onclick="pick(this)">Entrevista</button></div><div class="status" id="med" style="margin-top:12px"><span class="green"></span><strong>Contexto médico aplicado</strong><span>Preserva termos médicos, medicamentos, doses, vias, siglas e exames.</span></div></div>
-<div class="actions"><button class="ghost">Cancelar</button><button class="go" onclick="alert('Prévia: a transcrição iniciaria agora com o modo selecionado.')">Transcrever</button></div></div>
+<div class="actions"><button class="ghost">Cancelar</button><button class="go" id="transcribeBtn" onclick="startTranscription()">Transcrever</button></div></div>
+
+<div id="progressPanel" class="progresspanel">
+  <div class="progresshead">
+    <div class="spinner"></div>
+    <div>
+      <strong id="progressTitle">Preparando áudio...</strong>
+      <div class="progressmeta" id="progressMeta">Iniciando processo de transcrição</div>
+    </div>
+  </div>
+  <div class="progressbar"><span id="progressFill"></span></div>
+  <div class="progressline">
+    <span id="progressStage">Preparando arquivo</span>
+    <strong id="progressPct">0%</strong>
+  </div>
+</div>
+
+<div id="resultPanel" class="resultpanel">
+  <div class="progresshead">
+    <span class="badge">Concluída</span>
+    <div>
+      <strong>Transcrição finalizada</strong>
+      <div class="progressmeta">Resultado de demonstração da prévia online</div>
+    </div>
+  </div>
+  <div class="resulttext">
+    <p><strong>00:00</strong> — Hoje vamos revisar a abordagem inicial da anafilaxia, uma reação de hipersensibilidade sistêmica, grave e potencialmente fatal.</p>
+    <p><strong>00:15</strong> — O diagnóstico é clínico e deve ser reconhecido rapidamente para início do tratamento.</p>
+    <p><strong>00:31</strong> — A adrenalina intramuscular é o tratamento de primeira linha.</p>
+  </div>
+  <div class="actions">
+    <button class="ghost" onclick="resetTranscription()">Nova transcrição</button>
+  </div>
+</div>
+
 <div class="hist"><p class="ey">HISTÓRICO</p><div class="histitem"><div><strong>Anafilaxia 1.m4a</strong><div style="color:#817971;font-size:12px">Aula médica • Português (Brasil)</div></div><span class="badge">Concluída</span></div></div>
 <div class="footer">Prévia online em HTML/JavaScript • sem Lovable • sem cobrança.</div>
 </section>
@@ -166,6 +200,60 @@ function modelChange(){
   const info=names[v];
   d.innerHTML='<strong>'+info[0]+'</strong><span class="note">'+info[1]+'</span>';
   p.style.display=v==='openai-paid'?'block':'none';
+}
+function startTranscription(){
+  const btn=document.getElementById('transcribeBtn');
+  const panel=document.getElementById('progressPanel');
+  const result=document.getElementById('resultPanel');
+  const fill=document.getElementById('progressFill');
+  const pct=document.getElementById('progressPct');
+  const title=document.getElementById('progressTitle');
+  const meta=document.getElementById('progressMeta');
+  const stage=document.getElementById('progressStage');
+
+  result.classList.remove('show');
+  panel.classList.add('show');
+  panel.scrollIntoView({behavior:'smooth',block:'center'});
+  btn.disabled=true;
+  btn.textContent='Transcrevendo...';
+
+  let value=0;
+  const stages=[
+    [12,'Preparando áudio...','Normalizando o arquivo para transcrição','Preparando arquivo'],
+    [35,'Analisando o áudio...','Detectando fala e segmentos','Analisando áudio'],
+    [62,'Transcrevendo...','Convertendo fala em texto','Transcrevendo'],
+    [84,'Revisando segmentos...','Organizando o texto reconhecido','Finalizando'],
+    [100,'Concluído','Transcrição pronta','Concluído']
+  ];
+  let idx=0;
+
+  const timer=setInterval(()=>{
+    value=Math.min(value+4,100);
+    fill.style.width=value+'%';
+    pct.textContent=value+'%';
+
+    if(idx<stages.length && value>=stages[idx][0]){
+      title.textContent=stages[idx][1];
+      meta.textContent=stages[idx][2];
+      stage.textContent=stages[idx][3];
+      idx++;
+    }
+
+    if(value>=100){
+      clearInterval(timer);
+      setTimeout(()=>{
+        panel.classList.remove('show');
+        result.classList.add('show');
+        result.scrollIntoView({behavior:'smooth',block:'start'});
+        btn.disabled=false;
+        btn.textContent='Transcrever';
+      },450);
+    }
+  },120);
+}
+function resetTranscription(){
+  document.getElementById('resultPanel').classList.remove('show');
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 function pick(b){document.querySelectorAll('#types .chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');med.style.display=b.textContent.trim()==='Aula médica'?'flex':'none'}
 function convert(){done.classList.remove('show');let v=0;let t=setInterval(()=>{v+=10;convbar.style.width=v+'%';if(v>=100){clearInterval(t);done.classList.add('show')}},90)}
