@@ -36,28 +36,70 @@ button,input,select{font:inherit}button{cursor:pointer}
   <div class="field">
     <label>Modelo de transcrição</label>
     <select id="model" onchange="modelChange()">
-      <optgroup label="RODA ONLINE">
-        <option value="online-small">Whisper Small — roda online</option>
-        <option value="online-base">Whisper Base — roda online</option>
-        <option value="online-tiny">Whisper Tiny — roda online</option>
-        <option value="hf-parakeet">Hugging Face Parakeet — roda online</option>
-        <option value="hf-mms">Hugging Face MMS — roda online</option>
-        <option value="hf-vibe">Hugging Face VibeVoice ASR — roda online</option>
-        <option value="hf-qwen">Hugging Face Qwen ASR — roda online</option>
-      </optgroup>
+  <optgroup label="RODA ONLINE AGORA">
+    <option value="online-tiny">Whisper Tiny — online</option>
+    <option value="online-tiny-en">Whisper Tiny.en — online (inglês)</option>
+    <option value="online-base">Whisper Base — online</option>
+    <option value="online-base-en">Whisper Base.en — online (inglês)</option>
+    <option value="online-small" selected>Whisper Small — online</option>
+    <option value="online-small-en">Whisper Small.en — online (inglês)</option>
+  </optgroup>
 
-      <optgroup label="RODA INSTALADO NO COMPUTADOR">
-        <option value="cpp-turbo">Whisper.cpp Large V3 Turbo — instalado no computador</option>
-        <option value="cpp-v3">Whisper.cpp Large V3 — instalado no computador</option>
-        <option value="local-v3">OpenAI Whisper local Large V3 — instalado no computador</option>
-        <option value="faster-turbo">Faster Whisper Large V3 Turbo — instalado no computador</option>
-        <option value="faster-v3">Faster Whisper Large V3 — instalado no computador</option>
-      </optgroup>
+  <optgroup label="WHISPER.CPP — INSTALADO NO COMPUTADOR">
+    <option value="cpp-tiny">Whisper.cpp — Tiny</option>
+    <option value="cpp-tiny-en">Whisper.cpp — Tiny.en</option>
+    <option value="cpp-base">Whisper.cpp — Base</option>
+    <option value="cpp-base-en">Whisper.cpp — Base.en</option>
+    <option value="cpp-small">Whisper.cpp — Small</option>
+    <option value="cpp-small-en">Whisper.cpp — Small.en</option>
+    <option value="cpp-medium">Whisper.cpp — Medium</option>
+    <option value="cpp-medium-en">Whisper.cpp — Medium.en</option>
+    <option value="cpp-large">Whisper.cpp — Large</option>
+    <option value="cpp-v2">Whisper.cpp — Large V2</option>
+    <option value="cpp-v3">Whisper.cpp — Large V3</option>
+    <option value="cpp-turbo">Whisper.cpp — Large V3 Turbo</option>
+    <option value="cpp-custom">Whisper.cpp — Modelo personalizado</option>
+  </optgroup>
 
-      <optgroup label="AVANÇADO">
-        <option value="openai-paid">OpenAI GPT-4o Transcribe — IA avançada (pago)</option>
-      </optgroup>
-    </select>
+  <optgroup label="OPENAI WHISPER LOCAL — INSTALADO NO COMPUTADOR">
+    <option value="local-tiny">OpenAI Whisper local — Tiny</option>
+    <option value="local-tiny-en">OpenAI Whisper local — Tiny.en</option>
+    <option value="local-base">OpenAI Whisper local — Base</option>
+    <option value="local-base-en">OpenAI Whisper local — Base.en</option>
+    <option value="local-small">OpenAI Whisper local — Small</option>
+    <option value="local-small-en">OpenAI Whisper local — Small.en</option>
+    <option value="local-medium">OpenAI Whisper local — Medium</option>
+    <option value="local-medium-en">OpenAI Whisper local — Medium.en</option>
+    <option value="local-large">OpenAI Whisper local — Large</option>
+    <option value="local-v2">OpenAI Whisper local — Large V2</option>
+    <option value="local-v3">OpenAI Whisper local — Large V3</option>
+    <option value="local-turbo">OpenAI Whisper local — Large V3 Turbo</option>
+  </optgroup>
+
+  <optgroup label="FASTER WHISPER — INSTALADO NO COMPUTADOR">
+    <option value="faster-tiny">Faster Whisper — Tiny</option>
+    <option value="faster-tiny-en">Faster Whisper — Tiny.en</option>
+    <option value="faster-base">Faster Whisper — Base</option>
+    <option value="faster-base-en">Faster Whisper — Base.en</option>
+    <option value="faster-small">Faster Whisper — Small</option>
+    <option value="faster-small-en">Faster Whisper — Small.en</option>
+    <option value="faster-medium">Faster Whisper — Medium</option>
+    <option value="faster-medium-en">Faster Whisper — Medium.en</option>
+    <option value="faster-large">Faster Whisper — Large</option>
+    <option value="faster-v2">Faster Whisper — Large V2</option>
+    <option value="faster-v3">Faster Whisper — Large V3</option>
+    <option value="faster-turbo">Faster Whisper — Large V3 Turbo</option>
+    <option value="faster-custom">Faster Whisper — Modelo personalizado</option>
+  </optgroup>
+
+  <optgroup label="HUGGING FACE — INSTALADO NO COMPUTADOR">
+    <option value="hf-search">Hugging Face — procurar/selecionar modelo compatível</option>
+  </optgroup>
+
+  <optgroup label="AVANÇADO — ONLINE PAGO">
+    <option value="openai-paid">OpenAI GPT-4o Transcribe — IA avançada (pago)</option>
+  </optgroup>
+</select>
     <div class="availability" id="availability"><strong>Disponibilidade:</strong> roda online no navegador.</div>
   </div>
 
@@ -166,31 +208,32 @@ setTimeout(()=>splash.classList.add('hide'),2500);
 function showTrans(){trans.classList.remove('hide');conv.classList.remove('show')}
 function showConv(){trans.classList.add('hide');conv.classList.add('show')}
 function modelChange(){
-  const v=document.getElementById('model').value;
+  const select=document.getElementById('model');
+  const v=select.value;
+  const label=select.selectedOptions[0]?.textContent || 'Modelo';
   const d=document.getElementById('modelDesc');
   const p=document.getElementById('paidBox');
   const a=document.getElementById('availability');
 
-  const info={
-    'online-small':['Whisper Small — roda online','Executa diretamente no navegador e processa o arquivo completo em blocos.','roda online no navegador.'],
-    'online-base':['Whisper Base — roda online','Modelo mais leve para execução online, com menor uso de memória.','roda online no navegador.'],
-    'online-tiny':['Whisper Tiny — roda online','Modelo muito leve para testes rápidos no navegador.','roda online no navegador.'],
-    'hf-parakeet':['Hugging Face Parakeet — roda online','Modelo compatível via Hugging Face para execução online quando suportado.','roda online quando compatível com o navegador.'],
-    'hf-mms':['Hugging Face MMS — roda online','Modelo multilíngue compatível via Hugging Face.','roda online quando compatível com o navegador.'],
-    'hf-vibe':['Hugging Face VibeVoice ASR — roda online','Modelo ASR compatível via Hugging Face.','roda online quando compatível com o navegador.'],
-    'hf-qwen':['Hugging Face Qwen ASR — roda online','Modelo ASR compatível via Hugging Face.','roda online quando compatível com o navegador.'],
-    'cpp-turbo':['Whisper.cpp Large V3 Turbo — instalado no computador','Modelo local de alta qualidade e boa velocidade.','roda no aplicativo instalado no computador.'],
-    'cpp-v3':['Whisper.cpp Large V3 — instalado no computador','Modelo local com foco em qualidade.','roda no aplicativo instalado no computador.'],
-    'local-v3':['OpenAI Whisper local Large V3 — instalado no computador','Whisper original executado localmente, sem uso de API.','roda no aplicativo instalado no computador.'],
-    'faster-turbo':['Faster Whisper Large V3 Turbo — instalado no computador','Implementação otimizada para maior velocidade.','roda no aplicativo instalado no computador.'],
-    'faster-v3':['Faster Whisper Large V3 — instalado no computador','Implementação otimizada do Large V3.','roda no aplicativo instalado no computador.'],
-    'openai-paid':['OpenAI GPT-4o Transcribe — IA avançada','Modelo de IA na nuvem disponível como recurso pago do Lírico AI.','recurso online pago do plano avançado.']
-  };
+  const online=v.startsWith('online-');
+  const paid=v==='openai-paid';
+  const hugging=v==='hf-search';
 
-  const i=info[v];
-  d.innerHTML='<strong>'+i[0]+'</strong><span class="note">'+i[1]+'</span>';
-  a.innerHTML='<strong>Disponibilidade:</strong> '+i[2];
-  p.style.display=v==='openai-paid'?'block':'none';
+  p.style.display=paid?'block':'none';
+
+  if(online){
+    d.innerHTML='<strong>'+label+'</strong><span class="note">Modelo real disponível para teste online nesta página. O arquivo inteiro é processado.</span>';
+    a.innerHTML='<strong>Disponibilidade:</strong> roda online agora nesta página.';
+  }else if(paid){
+    d.innerHTML='<strong>'+label+'</strong><span class="note">Modelo avançado online do Lírico AI, disponível como recurso pago.</span>';
+    a.innerHTML='<strong>Disponibilidade:</strong> online, mediante plano pago.';
+  }else if(hugging){
+    d.innerHTML='<strong>'+label+'</strong><span class="note">No aplicativo instalado, você poderá pesquisar e selecionar modelos Hugging Face compatíveis, incluindo MMS, Parakeet, VibeVoice ASR e Qwen ASR.</span>';
+    a.innerHTML='<strong>Disponibilidade:</strong> roda no aplicativo instalado no computador.';
+  }else{
+    d.innerHTML='<strong>'+label+'</strong><span class="note">Modelo real disponível no aplicativo desktop Lírico AI.</span>';
+    a.innerHTML='<strong>Disponibilidade:</strong> roda no aplicativo instalado no computador.';
+  }
 }
 
 function resultModeChange(){
