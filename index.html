@@ -105,6 +105,7 @@ button,input,select{font:inherit}button{cursor:pointer}
   </div>
 </div>
 
+<div class="note" style="margin-top:12px"><strong>Teste online real:</strong> para garantir funcionamento no navegador, a transcrição local desta página usa Whisper Small em WebAssembly e processa o áudio inteiro em blocos de 30 segundos. O modelo escolhido acima continua sendo a referência para o aplicativo desktop.</div>
 <div id="modelDesc" class="modeldesc">
   <strong>Whisper.cpp — Large V3 Turbo</strong>
   <span class="note">Modelo local de alta qualidade e boa velocidade. Não usa créditos da OpenAI.</span>
@@ -142,14 +143,10 @@ button,input,select{font:inherit}button{cursor:pointer}
     <span class="badge">Concluída</span>
     <div>
       <strong>Transcrição finalizada</strong>
-      <div class="progressmeta">Resultado de demonstração da prévia online</div>
+      <div class="progressmeta" id="resultMeta">Resultado real gerado a partir do arquivo selecionado</div>
     </div>
   </div>
-  <div class="resulttext">
-    <p><strong>00:00</strong> — Hoje vamos revisar a abordagem inicial da anafilaxia, uma reação de hipersensibilidade sistêmica, grave e potencialmente fatal.</p>
-    <p><strong>00:15</strong> — O diagnóstico é clínico e deve ser reconhecido rapidamente para início do tratamento.</p>
-    <p><strong>00:31</strong> — A adrenalina intramuscular é o tratamento de primeira linha.</p>
-  </div>
+  <div class="resulttext" id="resultText"><p>Aguardando transcrição...</p></div>
   <div class="actions">
     <button class="ghost" onclick="resetTranscription()">Nova transcrição</button>
   </div>
@@ -214,7 +211,81 @@ function modelChange(){
   d.innerHTML='<strong>'+info[0]+'</strong><span class="note">'+info[1]+'</span>';
   p.style.display=v==='openai-paid'?'block':'none';
 }
-function startTranscription(){
+let browserTranscriber=null;
+
+async function decodeTo16kMono(file){
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx) throw new Error('Seu navegador não oferece suporte ao processamento de áudio.');
+  const ctx=new AudioCtx();
+  const audioBuffer=await ctx.decodeAudioData((await file.arrayBuffer()).slice(0));
+  await ctx.close();
+
+  const channels=audioBuffer.numberOfChannels;
+  const length=audioBuffer.length;
+  const mono=new Float32Array(length);
+  for(let ch=0;ch<channels;ch++){
+    const data=audioBuffer.getChannelData(ch);
+    for(let i=0;i<length;i++) mono[i]+=data[i]/channels;
+  }
+
+  const sourceRate=audioBuffer.sampleRate;
+  if(sourceRate===16000) return mono;
+
+  const ratio=sourceRate/16000;
+  const outLength=Math.round(mono.length/ratio);
+  const out=new Float32Array(outLength);
+  for(let i=0;i<outLength;i++){
+    const pos=i*ratio;
+    const left=Math.floor(pos);
+    const right=Math.min(left+1,mono.length-1);
+    const frac=pos-left;
+    out[i]=mono[left]*(1-frac)+mono[right]*frac;
+  }
+  return out;
+}
+
+async function ensureBrowserTranscriber(progressMeta, progressFill, progressPct){
+  if(browserTranscriber) return browserTranscriber;
+
+  progressMeta.textContent='Carregando Whisper Small para o navegador. Na primeira vez isso pode demorar alguns minutos.';
+  const mod=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm');
+
+  browserTranscriber=await mod.pipeline(
+    'automatic-speech-recognition',
+    'Xenova/whisper-small',
+    {
+      progress_callback:(p)=>{
+        if(p && typeof p.progress==='number'){
+          const pct=Math.max(1,Math.min(35,Math.round(p.progress*35)));
+          progressFill.style.width=pct+'%';
+          progressPct.textContent=pct+'%';
+        }
+        if(p && p.file) progressMeta.textContent='Carregando modelo: '+p.file;
+      }
+    }
+  );
+  return browserTranscriber;
+}
+
+function formatTimestamp(seconds){
+  if(seconds==null || !isFinite(seconds)) return '';
+  seconds=Math.max(0,Math.floor(seconds));
+  const h=Math.floor(seconds/3600);
+  const m=Math.floor((seconds%3600)/60);
+  const s=seconds%60;
+  return h>0
+    ? String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')
+    : String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+async function startTranscription(){
+  const input=document.getElementById('file');
+  const file=input.files && input.files[0];
+  if(!file){
+    alert('Selecione primeiro um arquivo de áudio ou vídeo.');
+    return;
+  }
+
   const btn=document.getElementById('transcribeBtn');
   const panel=document.getElementById('progressPanel');
   const result=document.getElementById('resultPanel');
@@ -223,46 +294,91 @@ function startTranscription(){
   const title=document.getElementById('progressTitle');
   const meta=document.getElementById('progressMeta');
   const stage=document.getElementById('progressStage');
+  const resultText=document.getElementById('resultText');
+  const resultMeta=document.getElementById('resultMeta');
 
   result.classList.remove('show');
   panel.classList.add('show');
   panel.scrollIntoView({behavior:'smooth',block:'center'});
   btn.disabled=true;
   btn.textContent='Transcrevendo...';
+  fill.style.width='2%';
+  pct.textContent='2%';
+  title.textContent='Preparando áudio...';
+  meta.textContent='Lendo o arquivo completo';
+  stage.textContent='Preparando arquivo';
 
-  let value=0;
-  const stages=[
-    [12,'Preparando áudio...','Normalizando o arquivo para transcrição','Preparando arquivo'],
-    [35,'Analisando o áudio...','Detectando fala e segmentos','Analisando áudio'],
-    [62,'Transcrevendo...','Convertendo fala em texto','Transcrevendo'],
-    [84,'Revisando segmentos...','Organizando o texto reconhecido','Finalizando'],
-    [100,'Concluído','Transcrição pronta','Concluído']
-  ];
-  let idx=0;
+  try{
+    const audio=await decodeTo16kMono(file);
+    fill.style.width='8%';
+    pct.textContent='8%';
+    title.textContent='Carregando modelo...';
+    stage.textContent='Preparando Whisper';
 
-  const timer=setInterval(()=>{
-    value=Math.min(value+4,100);
-    fill.style.width=value+'%';
-    pct.textContent=value+'%';
+    const transcriber=await ensureBrowserTranscriber(meta,fill,pct);
 
-    if(idx<stages.length && value>=stages[idx][0]){
-      title.textContent=stages[idx][1];
-      meta.textContent=stages[idx][2];
-      stage.textContent=stages[idx][3];
-      idx++;
+    fill.style.width='40%';
+    pct.textContent='40%';
+    title.textContent='Transcrevendo o arquivo completo...';
+    meta.textContent='Processando em blocos de 30 segundos com sobreposição de 5 segundos';
+    stage.textContent='Transcrevendo';
+
+    const languageSelect=document.getElementById('language');
+    const outputSelect=document.getElementById('outputLanguage');
+    const langText=languageSelect ? languageSelect.value : 'Português (Brasil)';
+    const langMap={
+      'Português (Brasil)':'portuguese',
+      'Inglês':'english',
+      'Espanhol':'spanish',
+      'Francês':'french',
+      'Alemão':'german',
+      'Italiano':'italian'
+    };
+    const opts={
+      chunk_length_s:30,
+      stride_length_s:5,
+      return_timestamps:true,
+      task:(outputSelect && outputSelect.value==='Traduzir para Inglês')?'translate':'transcribe'
+    };
+    if(langMap[langText]) opts.language=langMap[langText];
+
+    const output=await transcriber(audio,opts);
+
+    fill.style.width='100%';
+    pct.textContent='100%';
+    title.textContent='Concluído';
+    meta.textContent='Transcrição do arquivo completo finalizada';
+    stage.textContent='Concluído';
+
+    let html='';
+    if(output.chunks && output.chunks.length){
+      html=output.chunks.map(ch=>{
+        const t=ch.timestamp||[];
+        const stamp=formatTimestamp(t[0]);
+        return '<p><strong>'+stamp+'</strong> — '+String(ch.text||'').trim()+'</p>';
+      }).join('');
+    }else{
+      html='<p>'+String(output.text||'').trim()+'</p>';
     }
+    resultText.innerHTML=html || '<p>Nenhum texto foi reconhecido.</p>';
+    resultMeta.textContent='Transcrição real • '+file.name+' • arquivo completo';
 
-    if(value>=100){
-      clearInterval(timer);
-      setTimeout(()=>{
-        panel.classList.remove('show');
-        result.classList.add('show');
-        result.scrollIntoView({behavior:'smooth',block:'start'});
-        btn.disabled=false;
-        btn.textContent='Transcrever';
-      },450);
-    }
-  },120);
+    setTimeout(()=>{
+      panel.classList.remove('show');
+      result.classList.add('show');
+      result.scrollIntoView({behavior:'smooth',block:'start'});
+    },350);
+  }catch(err){
+    console.error(err);
+    title.textContent='Falha na transcrição';
+    meta.textContent=(err && err.message)?err.message:String(err);
+    stage.textContent='Erro';
+    fill.style.width='0%';
+    pct.textContent='0%';
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Transcrever';
+  }
 }
 function resetTranscription(){
   document.getElementById('resultPanel').classList.remove('show');
