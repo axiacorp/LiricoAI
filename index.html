@@ -241,6 +241,84 @@ function resultModeChange(){
   document.getElementById('translateOptions').style.display=isTranslate?'block':'none';
 }
 
+let browserTranscriber=null;
+let browserTranscriberModel=null;
+
+async function decodeTo16kMono(file){
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx) throw new Error('Seu navegador não oferece suporte ao processamento de áudio.');
+  const ctx=new AudioCtx();
+  const audioBuffer=await ctx.decodeAudioData((await file.arrayBuffer()).slice(0));
+  await ctx.close();
+
+  const channels=audioBuffer.numberOfChannels;
+  const length=audioBuffer.length;
+  const mono=new Float32Array(length);
+
+  for(let ch=0;ch<channels;ch++){
+    const data=audioBuffer.getChannelData(ch);
+    for(let i=0;i<length;i++) mono[i]+=data[i]/channels;
+  }
+
+  const sourceRate=audioBuffer.sampleRate;
+  if(sourceRate===16000) return mono;
+
+  const ratio=sourceRate/16000;
+  const outLength=Math.round(mono.length/ratio);
+  const out=new Float32Array(outLength);
+
+  for(let i=0;i<outLength;i++){
+    const pos=i*ratio;
+    const left=Math.floor(pos);
+    const right=Math.min(left+1,mono.length-1);
+    const frac=pos-left;
+    out[i]=mono[left]*(1-frac)+mono[right]*frac;
+  }
+
+  return out;
+}
+
+async function ensureBrowserTranscriber(modelId, progressMeta, progressFill, progressPct){
+  if(browserTranscriber && browserTranscriberModel===modelId) return browserTranscriber;
+
+  browserTranscriber=null;
+  browserTranscriberModel=null;
+
+  progressMeta.textContent='Carregando '+modelId+' no navegador. Na primeira vez isso pode demorar.';
+
+  const mod=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm');
+
+  browserTranscriber=await mod.pipeline(
+    'automatic-speech-recognition',
+    modelId,
+    {
+      progress_callback:(p)=>{
+        if(p && typeof p.progress==='number'){
+          const pct=Math.max(1,Math.min(35,Math.round(p.progress*35)));
+          progressFill.style.width=pct+'%';
+          progressPct.textContent=pct+'%';
+        }
+        if(p && p.file) progressMeta.textContent='Carregando modelo: '+p.file;
+      }
+    }
+  );
+
+  browserTranscriberModel=modelId;
+  return browserTranscriber;
+}
+
+function formatTimestamp(seconds){
+  if(seconds==null || !isFinite(seconds)) return '';
+  seconds=Math.max(0,Math.floor(seconds));
+  const h=Math.floor(seconds/3600);
+  const m=Math.floor((seconds%3600)/60);
+  const s=seconds%60;
+
+  return h>0
+    ? String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')
+    : String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
 async function startTranscription(){
   const input=document.getElementById('file');
   const file=input.files && input.files[0];
@@ -272,13 +350,30 @@ async function startTranscription(){
   stage.textContent='Preparando arquivo';
 
   try{
+    const selectedModel=document.getElementById('model').value;
+    const onlineModels={
+      'online-tiny':'Xenova/whisper-tiny',
+      'online-tiny-en':'Xenova/whisper-tiny.en',
+      'online-base':'Xenova/whisper-base',
+      'online-base-en':'Xenova/whisper-base.en',
+      'online-small':'Xenova/whisper-small',
+      'online-small-en':'Xenova/whisper-small.en'
+    };
+
+    if(!onlineModels[selectedModel]){
+      if(selectedModel==='openai-paid'){
+        throw new Error('A OpenAI paga ainda não está ativada nesta prévia. Use “Ver planos / Ativar IA”.');
+      }
+      throw new Error('Este modelo roda no aplicativo instalado. Para testar online agora, escolha um modelo da seção “RODA ONLINE AGORA”.');
+    }
+
     const audio=await decodeTo16kMono(file);
     fill.style.width='8%';
     pct.textContent='8%';
     title.textContent='Carregando modelo...';
     stage.textContent='Preparando Whisper';
 
-    const transcriber=await ensureBrowserTranscriber(meta,fill,pct);
+    const transcriber=await ensureBrowserTranscriber(onlineModels[selectedModel],meta,fill,pct);
 
     fill.style.width='40%';
     pct.textContent='40%';
