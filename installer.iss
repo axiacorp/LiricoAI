@@ -3,7 +3,7 @@
 
 #define AppName "Lírico AI"
 #define AppExeName "LiricoAI.exe"
-#define AppIconPath "buzz\assets\buzz.ico"
+#define AppIconPath "buzz\assets\liricoai.ico"
 #define AppSourcePath "dist\LiricoAI\*"
 #define OutputDir "dist"
 #define AppRegKey "Software\LiricoAI"
