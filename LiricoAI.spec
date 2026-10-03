@@ -173,7 +173,7 @@ exe = EXE(
     pyz,
     a.scripts,
     options,
-    icon="./buzz/assets/buzz.ico",
+    icon="./buzz/assets/liricoai.ico",
     exclude_binaries=True,
     name="LiricoAI",
     debug=DEBUG,
@@ -200,7 +200,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name="LiricoAI.app",
-    icon="./buzz/assets/buzz.icns",
+    icon="./buzz/assets/liricoai.icns",
     bundle_identifier="com.axiacorp.liricoai",
     version=VERSION,
     info_plist={
