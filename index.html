@@ -198,7 +198,7 @@ function resultModeChange(){
   document.getElementById('translateOptions').style.display=isTranslate?'block':'none';
 }
 
-function startTranscription(){
+async function startTranscription(){
   const input=document.getElementById('file');
   const file=input.files && input.files[0];
   if(!file){
