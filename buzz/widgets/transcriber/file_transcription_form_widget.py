@@ -168,23 +168,22 @@ class FileTranscriptionFormWidget(QWidget):
         mode = self._current_mode()
 
         if mode == "auto":
+            # Automatic mode is intentionally OpenAI-only. Never silently fall
+            # back to a local Whisper model: users choosing the recommended mode
+            # must get the same AI transcription pipeline every time.
+            self.transcription_options.model = TranscriptionModel(
+                model_type=ModelType.OPEN_AI_WHISPER_API,
+                whisper_model_size=None,
+            )
             if self.transcription_options.openai_access_token:
-                self.transcription_options.model = TranscriptionModel(
-                    model_type=ModelType.OPEN_AI_WHISPER_API,
-                    whisper_model_size=None,
-                )
                 self.mode_status_label.setText(
-                    "Alta precisão online ativada. O Lírico AI usará o modelo "
-                    "de transcrição da OpenAI configurado no aplicativo."
+                    "IA OpenAI ativada. O Lírico AI enviará o áudio para o "
+                    "modelo de transcrição da OpenAI."
                 )
             else:
-                self.transcription_options.model = TranscriptionModel(
-                    model_type=ModelType.WHISPER_CPP,
-                    whisper_model_size=WhisperModelSize.LARGEV3TURBO,
-                )
                 self.mode_status_label.setText(
-                    "Sem chave da OpenAI: o Lírico AI usará automaticamente "
-                    "Large-V3-Turbo no próprio computador."
+                    "IA OpenAI obrigatória. Configure uma chave da OpenAI para "
+                    "iniciar a transcrição."
                 )
         elif mode == "offline":
             self.transcription_options.model = TranscriptionModel(
