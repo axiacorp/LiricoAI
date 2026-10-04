@@ -5,7 +5,7 @@ import gettext
 from PyQt6.QtCore import QLocale
 
 from buzz.assets import get_path
-from buzz.settings.settings import APP_NAME, Settings
+from buzz.settings.settings import Settings
 
 locale_dir = get_path("locale")
 gettext.bindtextdomain("buzz", locale_dir)
@@ -17,7 +17,7 @@ languages = [
 ]
 
 translate = gettext.translation(
-    APP_NAME.lower(), locale_dir, languages=languages, fallback=True
+    "buzz", locale_dir, languages=languages, fallback=True
 )
 
 _ = translate.gettext
