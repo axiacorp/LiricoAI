@@ -39,9 +39,9 @@ button,input,select{font:inherit}button{cursor:pointer}
   <optgroup label="RODA ONLINE AGORA">
     <option value="online-tiny">Whisper Tiny — online</option>
     <option value="online-tiny-en">Whisper Tiny.en — online (inglês)</option>
-    <option value="online-base">Whisper Base — online</option>
+    <option value="online-base" selected>Whisper Base — online</option>
     <option value="online-base-en">Whisper Base.en — online (inglês)</option>
-    <option value="online-small" selected>Whisper Small — online</option>
+    <option value="online-small">Whisper Small — online</option>
     <option value="online-small-en">Whisper Small.en — online (inglês)</option>
   </optgroup>
 
@@ -137,8 +137,8 @@ button,input,select{font:inherit}button{cursor:pointer}
   </div>
 
   <div id="modelDesc" class="modeldesc">
-    <strong>Whisper Small — roda online</strong>
-    <span class="note">Executa diretamente no navegador e processa o arquivo completo em blocos.</span>
+    <strong>Whisper Base — roda online</strong>
+    <span class="note">Modelo online recomendado para melhor estabilidade no navegador, inclusive Safari.</span>
   </div>
 
   <div id="paidBox" class="paid" style="display:none">
@@ -222,7 +222,7 @@ function modelChange(){
   p.style.display=paid?'block':'none';
 
   if(online){
-    d.innerHTML='<strong>'+label+'</strong><span class="note">Modelo real disponível para teste online nesta página. O arquivo inteiro é processado.</span>';
+    d.innerHTML='<strong>'+label+'</strong><span class="note">Modelo real disponível para teste online nesta página. O arquivo inteiro é processado. No Safari, Base e Tiny são as opções mais estáveis.</span>';
     a.innerHTML='<strong>Disponibilidade:</strong> roda online agora nesta página.';
   }else if(paid){
     d.innerHTML='<strong>'+label+'</strong><span class="note">Modelo avançado online do Lírico AI, disponível como recurso pago.</span>';
@@ -365,6 +365,11 @@ async function startTranscription(){
         throw new Error('A OpenAI paga ainda não está ativada nesta prévia. Use “Ver planos / Ativar IA”.');
       }
       throw new Error('Este modelo roda no aplicativo instalado. Para testar online agora, escolha um modelo da seção “RODA ONLINE AGORA”.');
+    }
+
+    const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if(isSafari && (selectedModel==='online-small' || selectedModel==='online-small-en')){
+      throw new Error('O Whisper Small consome muita memória no Safari e pode travar a aba. Use Whisper Base ou Whisper Tiny para o teste online. O Small continua disponível no aplicativo instalado.');
     }
 
     const audio=await decodeTo16kMono(file);
