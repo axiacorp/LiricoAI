@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QFrame,
-    QSizePolicy
+    QSizePolicy, QStackedWidget
 )
 
 from buzz.assets import get_path
@@ -47,11 +47,13 @@ class LiricoDashboardWidget(QWidget):
 
         new_btn = QPushButton("+ Nova transcrição")
         new_btn.setObjectName("primaryNav")
+        new_btn.clicked.connect(self.show_home)
         new_btn.clicked.connect(self.on_new_transcription)
         side.addWidget(new_btn)
 
         transcribe_btn = QPushButton("Transcrever")
         transcribe_btn.setObjectName("navButton")
+        transcribe_btn.clicked.connect(self.show_home)
         transcribe_btn.clicked.connect(self.on_new_transcription)
         side.addWidget(transcribe_btn)
 
@@ -62,7 +64,7 @@ class LiricoDashboardWidget(QWidget):
 
         history_btn = QPushButton("Histórico")
         history_btn.setObjectName("navButton")
-        history_btn.clicked.connect(self.focus_history)
+        history_btn.clicked.connect(self.show_history)
         side.addWidget(history_btn)
 
         side.addStretch(1)
@@ -70,6 +72,9 @@ class LiricoDashboardWidget(QWidget):
         footer.setObjectName("sidebarFooter")
         side.addWidget(footer)
         root.addWidget(sidebar)
+
+        self.pages = QStackedWidget()
+        self.pages.setObjectName("liricoPages")
 
         main = QWidget()
         main.setObjectName("liricoMain")
@@ -129,10 +134,23 @@ class LiricoDashboardWidget(QWidget):
         section_row.addWidget(trans_card)
         section_row.addWidget(conv_card)
         body.addLayout(section_row)
+        body.addStretch(1)
 
-        history_label = QLabel("Histórico")
-        history_label.setObjectName("sectionTitle")
-        body.addWidget(history_label)
+        history_page = QWidget()
+        history_page.setObjectName("liricoMain")
+        history_body = QVBoxLayout(history_page)
+        history_body.setContentsMargins(34, 28, 34, 30)
+        history_body.setSpacing(16)
+
+        history_title = QLabel("Histórico")
+        history_title.setObjectName("pageTitle")
+        history_body.addWidget(history_title)
+
+        history_subtitle = QLabel(
+            "Suas transcrições ficam organizadas aqui."
+        )
+        history_subtitle.setObjectName("pageSubtitle")
+        history_body.addWidget(history_subtitle)
 
         history_frame = QFrame()
         history_frame.setObjectName("historyCard")
@@ -140,9 +158,11 @@ class LiricoDashboardWidget(QWidget):
         history_layout.setContentsMargins(0, 0, 0, 0)
         self.history_widget.setParent(history_frame)
         history_layout.addWidget(self.history_widget)
-        body.addWidget(history_frame, 1)
+        history_body.addWidget(history_frame, 1)
 
-        root.addWidget(main, 1)
+        self.pages.addWidget(main)
+        self.pages.addWidget(history_page)
+        root.addWidget(self.pages, 1)
         self.setStyleSheet(self._stylesheet())
 
     def _action_card(self, title, text, button_text, callback):
@@ -168,9 +188,13 @@ class LiricoDashboardWidget(QWidget):
         layout.addWidget(button)
         return card
 
-    def focus_history(self):
+    def show_history(self):
+        self.pages.setCurrentIndex(1)
         self.history_widget.setFocus()
         self.history_widget.scrollToTop()
+
+    def show_home(self):
+        self.pages.setCurrentIndex(0)
 
     @staticmethod
     def _stylesheet():
