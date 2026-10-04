@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lírico AI — Prévia Online</title>
 <style>
@@ -204,9 +207,25 @@ button,input,select{font:inherit}button{cursor:pointer}
 </main></div></div></div>
 <script>
 setTimeout(()=>splash.classList.add('hide'),2500);
-window.addEventListener('DOMContentLoaded',applyOnlineModelSafety);
-function showTrans(){trans.classList.remove('hide');conv.classList.remove('show')}
-function showConv(){trans.classList.add('hide');conv.classList.add('show')}
+window.addEventListener('DOMContentLoaded',()=>{
+  const transEl=document.getElementById('trans');
+  const convEl=document.getElementById('conv');
+  if(transEl) transEl.classList.remove('hide');
+  if(convEl) convEl.classList.remove('show');
+  applyOnlineModelSafety();
+});
+function showTrans(){
+  const transEl=document.getElementById('trans');
+  const convEl=document.getElementById('conv');
+  if(transEl) transEl.classList.remove('hide');
+  if(convEl) convEl.classList.remove('show');
+}
+function showConv(){
+  const transEl=document.getElementById('trans');
+  const convEl=document.getElementById('conv');
+  if(transEl) transEl.classList.add('hide');
+  if(convEl) convEl.classList.add('show');
+}
 function isSafariBrowser(){
   const ua=navigator.userAgent;
   return /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(ua);
