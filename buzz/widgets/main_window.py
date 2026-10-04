@@ -45,6 +45,7 @@ from buzz.widgets.icon import BUZZ_ICON_PATH
 from buzz.widgets.import_url_dialog import ImportURLDialog
 from buzz.widgets.main_window_toolbar import MainWindowToolbar
 from buzz.widgets.menu_bar import MenuBar
+from buzz.widgets.lirico_dashboard import LiricoDashboardWidget
 from buzz.widgets.preferences_dialog.models.preferences import Preferences
 from buzz.widgets.transcriber.file_transcriber_widget import FileTranscriberWidget
 from buzz.widgets.transcription_task_folder_watcher import (
@@ -160,7 +161,18 @@ class MainWindow(QMainWindow):
             self.on_transcriptions_updated
         )
 
-        self.setCentralWidget(self.table_widget)
+        self.dashboard = LiricoDashboardWidget(
+            history_widget=self.table_widget,
+            on_new_transcription=self.on_new_transcription_action_triggered,
+            on_converter=self.on_media_converter_action_triggered,
+            parent=self,
+        )
+        self.setCentralWidget(self.dashboard)
+
+        # The legacy Buzz toolbar is kept internally for shortcuts/state, but the
+        # Lírico AI dashboard is now the visible primary navigation.
+        self.toolbar.setVisible(False)
+        self.resize(1180, 780)
 
         # Start transcriber thread
         self.transcriber_thread = QThread()
