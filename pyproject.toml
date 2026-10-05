@@ -87,6 +87,7 @@ documentation = "https://chidiwilliams.github.io/buzz/docs"
 
 [project.scripts]
 buzz = "buzz.buzz:main"
+lirico-ai = "lirico_ai.app:main"
 
 [dependency-groups]
 dev = [
@@ -146,6 +147,7 @@ allow-direct-references = true
 [tool.hatch.build.targets.sdist]
 include = [
     "buzz",
+    "lirico_ai",
     "buzz/whisper_cpp/*",
     "buzz/locale/*/LC_MESSAGES/buzz.mo",
     "demucs_repo",
