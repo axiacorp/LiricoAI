@@ -43,3 +43,13 @@ O processo é iniciado pelo próprio Lírico, sem exigir Ollama instalado.
 ```bash
 python -m lirico_ai
 ```
+
+
+## Etapa 2 implementada
+
+- Modelo padrão inicial definido: Qwen3 8B Q4_K_M.
+- Manifesto local do modelo criado.
+- Script Windows criado para instalar o llama.cpp e o modelo no diretório do Lírico.
+- Tela "Gerar aula completa" conectada ao motor local.
+- Geração executada em thread separada para não bloquear a interface.
+- O motor continua preso a 127.0.0.1 e é encerrado pelo aplicativo.
