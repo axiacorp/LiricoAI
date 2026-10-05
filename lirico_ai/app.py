@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from PyQt6.QtCore import QThread, Qt
+from PyQt6.QtCore import QThread, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -24,9 +24,7 @@ from lirico_ai.workers import GenerationWorker
 
 
 class HomePage(QWidget):
-    generate_lesson_requested = __import__(
-        "PyQt6.QtCore", fromlist=["pyqtSignal"]
-    ).pyqtSignal()
+    generate_lesson_requested = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -60,9 +58,7 @@ class HomePage(QWidget):
 
 
 class LessonPage(QWidget):
-    back_requested = __import__(
-        "PyQt6.QtCore", fromlist=["pyqtSignal"]
-    ).pyqtSignal()
+    back_requested = pyqtSignal()
 
     def __init__(self, engine: EmbeddedLlamaEngine) -> None:
         super().__init__()
