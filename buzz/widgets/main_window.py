@@ -165,6 +165,7 @@ class MainWindow(QMainWindow):
             history_widget=self.table_widget,
             on_new_transcription=self.on_new_transcription_action_triggered,
             on_converter=self.on_media_converter_action_triggered,
+            on_quit=QApplication.instance().quit,
             parent=self,
         )
         self.setCentralWidget(self.dashboard)
