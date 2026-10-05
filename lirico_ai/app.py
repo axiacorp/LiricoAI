@@ -19,12 +19,13 @@ from PyQt6.QtWidgets import (
 from lirico_ai.core.ai_engine import GenerationRequest
 from lirico_ai.core.embedded_llama import EmbeddedLlamaEngine
 from lirico_ai.core.paths import default_model_path, runtime_executable
-from lirico_ai.prompts import SYSTEM_PROMPT
+from lirico_ai.prompts import PRESENTATION_PROMPT, SYSTEM_PROMPT
 from lirico_ai.workers import GenerationWorker
 
 
 class HomePage(QWidget):
     generate_lesson_requested = pyqtSignal()
+    generate_presentation_requested = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -42,10 +43,13 @@ class HomePage(QWidget):
         transcribe = QPushButton("Transcrever áudio ou vídeo")
         lesson = QPushButton("Gerar aula completa")
         lesson.clicked.connect(self.generate_lesson_requested.emit)
+        presentation = QPushButton("Criar apresentação com IA")
+        presentation.clicked.connect(self.generate_presentation_requested.emit)
 
         for button in (
             transcribe,
             lesson,
+            presentation,
             QPushButton("Criar resumo"),
             QPushButton("Gerar questões"),
             QPushButton("Criar flashcards"),
@@ -167,6 +171,113 @@ class LessonPage(QWidget):
         self.thread = None
 
 
+class PresentationPage(QWidget):
+    back_requested = pyqtSignal()
+
+    def __init__(self, engine: EmbeddedLlamaEngine) -> None:
+        super().__init__()
+        self.engine = engine
+        self.thread: QThread | None = None
+        self.worker: GenerationWorker | None = None
+
+        layout = QVBoxLayout(self)
+        title = QLabel("Criar apresentação com IA")
+        title.setStyleSheet("font-size: 24px; font-weight: 600;")
+        layout.addWidget(title)
+
+        help_text = QLabel(
+            "Cole uma transcrição, aula ou material. O Lírico AI irá criar um "
+            "roteiro completo de slides usando somente a IA local."
+        )
+        help_text.setWordWrap(True)
+        layout.addWidget(help_text)
+
+        self.input = QPlainTextEdit()
+        self.input.setPlaceholderText("Cole aqui o conteúdo da aula...")
+        layout.addWidget(self.input, 2)
+
+        actions = QHBoxLayout()
+        back = QPushButton("Voltar")
+        back.clicked.connect(self.back_requested.emit)
+        self.generate = QPushButton("Criar apresentação")
+        self.generate.clicked.connect(self.generate_presentation)
+        actions.addWidget(back)
+        actions.addStretch()
+        actions.addWidget(self.generate)
+        layout.addLayout(actions)
+
+        self.status = QLabel("")
+        layout.addWidget(self.status)
+
+        self.output = QPlainTextEdit()
+        self.output.setReadOnly(True)
+        self.output.setPlaceholderText(
+            "O roteiro da apresentação aparecerá aqui."
+        )
+        layout.addWidget(self.output, 3)
+
+    def generate_presentation(self) -> None:
+        source = self.input.toPlainText().strip()
+        if not source:
+            QMessageBox.information(
+                self,
+                "Lírico AI",
+                "Cole um conteúdo antes de criar a apresentação.",
+            )
+            return
+
+        if not self.engine.is_available():
+            QMessageBox.warning(
+                self,
+                "IA local não instalada",
+                "O runtime ou o modelo local ainda não foi instalado neste computador.",
+            )
+            return
+
+        request = GenerationRequest(
+            prompt="Crie uma apresentação completa a partir do conteúdo abaixo:\n\n"
+            + source,
+            system_prompt=PRESENTATION_PROMPT,
+            temperature=0.25,
+            max_tokens=5000,
+        )
+
+        self.generate.setEnabled(False)
+        self.status.setText(
+            "Lírico AI está estruturando a apresentação localmente..."
+        )
+        self.output.clear()
+
+        self.thread = QThread(self)
+        self.worker = GenerationWorker(self.engine, request)
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self._generation_finished)
+        self.worker.failed.connect(self._generation_failed)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.failed.connect(self.thread.quit)
+        self.thread.finished.connect(self._cleanup_worker)
+        self.thread.start()
+
+    def _generation_finished(self, text: str) -> None:
+        self.output.setPlainText(text)
+        self.status.setText("Apresentação estruturada com IA local.")
+        self.generate.setEnabled(True)
+
+    def _generation_failed(self, message: str) -> None:
+        self.status.setText("Não foi possível criar a apresentação.")
+        self.generate.setEnabled(True)
+        QMessageBox.critical(self, "Erro na IA local", message)
+
+    def _cleanup_worker(self) -> None:
+        if self.worker:
+            self.worker.deleteLater()
+        if self.thread:
+            self.thread.deleteLater()
+        self.worker = None
+        self.thread = None
+
+
 class StatusPage(QWidget):
     def __init__(self, engine: EmbeddedLlamaEngine) -> None:
         super().__init__()
@@ -214,15 +325,23 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
         self.home = HomePage()
         self.lesson = LessonPage(self.engine)
+        self.presentation = PresentationPage(self.engine)
         self.status = StatusPage(self.engine)
         self.stack.addWidget(self.home)
         self.stack.addWidget(self.lesson)
+        self.stack.addWidget(self.presentation)
         self.stack.addWidget(self.status)
 
         self.home.generate_lesson_requested.connect(
             lambda: self.stack.setCurrentWidget(self.lesson)
         )
+        self.home.generate_presentation_requested.connect(
+            lambda: self.stack.setCurrentWidget(self.presentation)
+        )
         self.lesson.back_requested.connect(
+            lambda: self.stack.setCurrentWidget(self.home)
+        )
+        self.presentation.back_requested.connect(
             lambda: self.stack.setCurrentWidget(self.home)
         )
 
