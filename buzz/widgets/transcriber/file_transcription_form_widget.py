@@ -96,13 +96,27 @@ class FileTranscriptionFormWidget(QWidget):
                 label,
                 (model_type.value, size.value if size else None, hf_id, description),
             )
+        current_model = self.transcription_options.model
+        current_index = next(
+            (
+                i for i, item in enumerate(MODEL_OPTIONS)
+                if item[1] == current_model.model_type
+                and item[2] == current_model.whisper_model_size
+                and (item[3] or "") == (current_model.hugging_face_model_id or "")
+            ),
+            -1,
+        )
         default_index = next(
-            (i for i, item in enumerate(MODEL_OPTIONS)
-             if item[1] == ModelType.WHISPER_CPP
-             and item[2] == WhisperModelSize.LARGEV3TURBO),
+            (
+                i for i, item in enumerate(MODEL_OPTIONS)
+                if item[1] == ModelType.WHISPER_CPP
+                and item[2] == WhisperModelSize.LARGEV3TURBO
+            ),
             0,
         )
-        self.model_combo_box.setCurrentIndex(default_index)
+        self.model_combo_box.setCurrentIndex(
+            current_index if current_index >= 0 else default_index
+        )
         self.model_combo_box.currentIndexChanged.connect(self.on_model_changed)
         root.addWidget(self._field("Modelo de transcrição", self.model_combo_box))
 
