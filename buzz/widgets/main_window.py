@@ -380,19 +380,26 @@ class MainWindow(QMainWindow):
     def open_file_transcriber_widget(
         self, file_paths: Optional[List[str]] = None, url: Optional[str] = None
     ):
-        file_transcriber_window = FileTranscriberWidget(
+        self.file_transcriber_window = FileTranscriberWidget(
             file_paths=file_paths,
             url=url,
-            parent=self,
-            flags=Qt.WindowType.Window,
+            parent=self.dashboard,
+            flags=Qt.WindowType.Widget,
         )
-        file_transcriber_window.triggered.connect(self.on_file_transcriber_triggered)
-        file_transcriber_window.openai_access_token_changed.connect(
+        self.file_transcriber_window.triggered.connect(self.on_file_transcriber_triggered)
+        self.file_transcriber_window.openai_access_token_changed.connect(
             self.on_openai_access_token_changed
         )
-        file_transcriber_window.show()
-        file_transcriber_window.raise_()
-        file_transcriber_window.activateWindow()
+
+        if file_paths:
+            display_name = ", ".join(os.path.basename(path) for path in file_paths)
+        else:
+            display_name = url or "Arquivo selecionado"
+
+        self.dashboard.show_transcriber(
+            self.file_transcriber_window,
+            display_name,
+        )
 
     @staticmethod
     def on_openai_access_token_changed(access_token: str):
