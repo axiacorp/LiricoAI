@@ -15,11 +15,12 @@ class LiricoDashboardWidget(QWidget):
     the legacy Buzz table-only home screen with the approved Lírico AI layout.
     """
 
-    def __init__(self, history_widget: QWidget, on_new_transcription, on_converter, parent=None):
+    def __init__(self, history_widget: QWidget, on_new_transcription, on_converter, on_quit, parent=None):
         super().__init__(parent)
         self.history_widget = history_widget
         self.on_new_transcription = on_new_transcription
         self.on_converter = on_converter
+        self.on_quit = on_quit
 
         self.setObjectName("liricoRoot")
         root = QHBoxLayout(self)
@@ -66,6 +67,12 @@ class LiricoDashboardWidget(QWidget):
         side.addWidget(history_btn)
 
         side.addStretch(1)
+
+        quit_btn = QPushButton("Sair")
+        quit_btn.setObjectName("quitNav")
+        quit_btn.clicked.connect(self.on_quit)
+        side.addWidget(quit_btn)
+
         footer = QLabel("Lírico AI")
         footer.setObjectName("sidebarFooter")
         side.addWidget(footer)
@@ -318,6 +325,19 @@ class LiricoDashboardWidget(QWidget):
         }
         QPushButton#navButton:hover {
             background: #4a403b;
+        }
+        QPushButton#quitNav {
+            background: transparent;
+            color: #cbbfb8;
+            border: 1px solid #4a403b;
+            border-radius: 9px;
+            padding: 10px 14px;
+            font-size: 14px;
+            text-align: left;
+        }
+        QPushButton#quitNav:hover {
+            background: #3a322e;
+            color: white;
         }
         QWidget#liricoMain {
             background: #faf8f6;
