@@ -53,3 +53,18 @@ python -m lirico_ai
 - Tela "Gerar aula completa" conectada ao motor local.
 - Geração executada em thread separada para não bloquear a interface.
 - O motor continua preso a 127.0.0.1 e é encerrado pelo aplicativo.
+
+
+## Apresentações offline
+
+Foi adicionada a função "Criar apresentação com IA".
+
+Nesta fase ela:
+- recebe uma transcrição, aula ou material textual;
+- usa apenas a IA local;
+- estrutura o conteúdo em sequência de slides;
+- cria título, objetivo visual, conteúdo principal e notas do apresentador;
+- sugere tabelas, fluxogramas, comparações e outros recursos visuais quando apropriado;
+- não usa internet nesta etapa.
+
+A geração visual final em PPTX/PDF ficará em módulo próprio de renderização, separado da lógica de IA.
