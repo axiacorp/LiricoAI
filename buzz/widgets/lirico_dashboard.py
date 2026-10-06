@@ -223,11 +223,22 @@ class LiricoDashboardWidget(QWidget):
         history_title.setObjectName("pageTitle")
         history_body.addWidget(history_title)
 
+        history_header = QHBoxLayout()
+        history_header.setSpacing(10)
+
         history_subtitle = QLabel(
             "Suas transcrições ficam organizadas aqui."
         )
         history_subtitle.setObjectName("pageSubtitle")
-        history_body.addWidget(history_subtitle)
+        history_header.addWidget(history_subtitle, 1)
+
+        delete_history_button = QPushButton("Excluir selecionado")
+        delete_history_button.setObjectName("dangerAction")
+        delete_history_button.clicked.connect(
+            self.history_widget.request_delete_selected
+        )
+        history_header.addWidget(delete_history_button)
+        history_body.addLayout(history_header)
 
         history_frame = QFrame()
         history_frame.setObjectName("historyCard")
@@ -397,6 +408,17 @@ class LiricoDashboardWidget(QWidget):
         }
         QPushButton#secondaryAction:hover {
             background: #ffefe2;
+        }
+        QPushButton#dangerAction {
+            background: #fff3f2;
+            color: #b42318;
+            border: 1px solid #f0b8b2;
+            border-radius: 8px;
+            padding: 9px 13px;
+            font-weight: 700;
+        }
+        QPushButton#dangerAction:hover {
+            background: #ffe7e4;
         }
         QFrame#historyCard QTableView {
             background: white;
