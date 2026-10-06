@@ -301,6 +301,12 @@ class MainWindow(QMainWindow):
             )
             self.add_task(task)
 
+        # A transcrição deve começar imediatamente após o clique em "Transcrever".
+        # Como o formulário é embutido no dashboard, navegar para o Histórico
+        # deixa a nova tarefa visível assim que ela entra na fila, enquanto o
+        # processamento continua em segundo plano.
+        self.dashboard.show_history()
+
     def on_clear_history_action_triggered(self):
         selected_rows = self.table_widget.selectionModel().selectedRows()
         if len(selected_rows) == 0:
