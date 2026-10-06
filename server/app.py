@@ -62,6 +62,14 @@ def health():
     }
 
 
+@app.post("/api/shutdown")
+def shutdown_server():
+    import os
+    import threading
+    threading.Timer(0.5, lambda: os._exit(0)).start()
+    return {"ok": True}
+
+
 @app.get("/api/models")
 def models():
     return {
