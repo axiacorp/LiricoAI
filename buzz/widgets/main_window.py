@@ -312,25 +312,43 @@ class MainWindow(QMainWindow):
         if len(selected_rows) == 0:
             return
 
-        question_box = QMessageBox()
-        question_box.setWindowTitle(_("Clear History"))
-        question_box.setIcon(QMessageBox.Icon.Question)
-        question_box.setText(
-            _(
-                "Are you sure you want to delete the selected transcription(s)? "
-                "This action cannot be undone."
-            ),
+        selected_transcriptions = [
+            self.table_widget.transcription(row) for row in selected_rows
+        ]
+        has_active = any(
+            transcription.status in {"queued", "in_progress"}
+            for transcription in selected_transcriptions
         )
+
+        question_box = QMessageBox()
+        question_box.setWindowTitle("Excluir transcrição")
+        question_box.setIcon(QMessageBox.Icon.Question)
+        if has_active:
+            question_box.setText(
+                "Uma ou mais transcrições selecionadas ainda estão na fila ou em andamento. "
+                "Deseja cancelar o processamento e excluir da lista?"
+            )
+        else:
+            question_box.setText(
+                "Deseja excluir a(s) transcrição(ões) selecionada(s) do Histórico? "
+                "Esta ação não pode ser desfeita."
+            )
         question_box.setStandardButtons(
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-        question_box.button(QMessageBox.StandardButton.Yes).setText(_("Ok"))
-        question_box.button(QMessageBox.StandardButton.No).setText(_("Cancel"))
+        question_box.button(QMessageBox.StandardButton.Yes).setText("Excluir")
+        question_box.button(QMessageBox.StandardButton.No).setText("Cancelar")
 
         reply = question_box.exec()
 
         if reply == QMessageBox.StandardButton.Yes:
-            self.table_widget.delete_transcriptions(selected_rows)
+            for transcription in selected_transcriptions:
+                if transcription.status in {"queued", "in_progress"}:
+                    self.transcriber_worker.cancel_task(UUID(transcription.id))
+
+            rows_to_delete = self.table_widget.selectionModel().selectedRows()
+            self.table_widget.delete_transcriptions(rows_to_delete)
+            self.table_widget.refresh_all()
 
     def on_stop_transcription_action_triggered(self):
         selected_transcriptions = self.table_widget.selected_transcriptions()
