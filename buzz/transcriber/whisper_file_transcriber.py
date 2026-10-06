@@ -11,6 +11,7 @@ from buzz import cuda_setup  # noqa: F401
 
 import torch
 import platform
+from pathlib import Path
 
 from buzz.transcriber.cuda_device import cuda_works
 import subprocess
@@ -97,6 +98,46 @@ def check_file_has_audio_stream(file_path: str) -> None:
         raise ValueError(f"Invalid media file: {e}")
     except (av.error.FileNotFoundError, OSError, UnicodeDecodeError):
         raise ValueError("File not found")
+
+
+def _build_lirico_context_prompt(task: FileTranscriptionTask) -> str:
+    """Build a conservative Whisper context prompt for Lírico AI.
+
+    The file name is often the lecture/topic title (for example, "Anafilaxia 2").
+    Supplying it as context helps Whisper prefer the correct vocabulary without
+    changing the audio or inventing content.
+    """
+    base_prompt = (task.transcription_options.initial_prompt or "").strip()
+
+    topic = ""
+    if task.file_path:
+        try:
+            topic = Path(task.file_path).stem.replace("_", " ").strip()
+        except (TypeError, ValueError):
+            topic = ""
+
+    if topic and base_prompt:
+        return (
+            f"{base_prompt}\n"
+            f"Tema provável do áudio: {topic}. "
+            "Use o tema apenas como contexto de vocabulário; não invente conteúdo."
+        )
+    if topic:
+        return (
+            f"Tema provável do áudio: {topic}. "
+            "Use o tema apenas como contexto de vocabulário; não invente conteúdo."
+        )
+    return base_prompt
+
+
+def _is_medical_prompt(prompt: str) -> bool:
+    normalized = (prompt or "").lower()
+    return (
+        "aula médica" in normalized
+        or "terminologia médica" in normalized
+        or "medicamentos" in normalized
+        or "contexto médico" in normalized
+    )
 
 
 class WhisperFileTranscriber(FileTranscriber):
@@ -431,17 +472,29 @@ class WhisperFileTranscriber(FileTranscriber):
         finally:
             torch.load = original_torch_load
 
+        context_prompt = _build_lirico_context_prompt(task)
+        medical_mode = _is_medical_prompt(context_prompt)
+
         if task.transcription_options.word_level_timings:
             stable_whisper.modify_model(model)
-            result: WhisperResult = model.transcribe(
+            transcribe_kwargs = dict(
                 audio=whisper_audio.load_audio(task.file_path),
                 language=task.transcription_options.language,
                 task=task.transcription_options.task.value,
-                temperature=DEFAULT_WHISPER_TEMPERATURE,
-                initial_prompt=task.transcription_options.initial_prompt,
-                no_speech_threshold=0.4,
+                temperature=0.0 if medical_mode else DEFAULT_WHISPER_TEMPERATURE,
+                initial_prompt=context_prompt,
+                no_speech_threshold=0.35 if medical_mode else 0.4,
                 fp16=use_cuda,
+                condition_on_previous_text=True,
             )
+            if medical_mode:
+                # Beam search is slower, but materially improves difficult
+                # terminology in lectures and clinical audio.
+                transcribe_kwargs.update(
+                    beam_size=5,
+                    patience=1.0,
+                )
+            result: WhisperResult = model.transcribe(**transcribe_kwargs)
             return [
                 Segment(
                     start=int(word.start * 1000),
@@ -453,15 +506,30 @@ class WhisperFileTranscriber(FileTranscriber):
                 for word in segment.words
             ]
 
-        result: dict = model.transcribe(
+        transcribe_kwargs = dict(
             audio=whisper_audio.load_audio(task.file_path),
             language=task.transcription_options.language,
             task=task.transcription_options.task.value,
-            temperature=task.transcription_options.temperature,
-            initial_prompt=task.transcription_options.initial_prompt,
+            temperature=0.0 if medical_mode else task.transcription_options.temperature,
+            initial_prompt=context_prompt,
             verbose=False,
             fp16=use_cuda,
+            condition_on_previous_text=True,
         )
+        if medical_mode:
+            # High-accuracy decoding profile for medical classes:
+            # deterministic decoding + beam search + slightly stricter
+            # no-speech handling. This avoids many phonetic substitutions
+            # without adding a second cloud service.
+            transcribe_kwargs.update(
+                beam_size=5,
+                patience=1.0,
+                no_speech_threshold=0.35,
+                logprob_threshold=-1.0,
+                compression_ratio_threshold=2.4,
+            )
+
+        result: dict = model.transcribe(**transcribe_kwargs)
         segments = result.get("segments")
         return [
             Segment(

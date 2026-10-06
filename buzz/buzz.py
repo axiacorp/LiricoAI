@@ -20,7 +20,7 @@ _model_root = os.environ.get("BUZZ_MODEL_ROOT")
 if _model_root:
     os.environ.setdefault("HF_HOME", os.path.dirname(_model_root))
 else:
-    os.environ.setdefault("HF_HOME", user_cache_dir("Buzz"))
+    os.environ.setdefault("HF_HOME", user_cache_dir("LiricoAI"))
 
 from buzz.assets import APP_BASE_DIR
 
@@ -64,7 +64,7 @@ def main():
     # https://stackoverflow.com/a/33979091
     multiprocessing.freeze_support()
 
-    log_dir = user_log_dir(appname="Buzz")
+    log_dir = user_log_dir(appname="LiricoAI")
     os.makedirs(log_dir, exist_ok=True)
 
     log_format = (
@@ -101,8 +101,8 @@ def main():
 
     logging.debug("app_dir: %s", APP_BASE_DIR)
     logging.debug("log_dir: %s", log_dir)
-    logging.debug("cache_dir: %s", user_cache_dir("Buzz"))
-    logging.debug("data_dir: %s", user_data_dir("Buzz"))
+    logging.debug("cache_dir: %s", user_cache_dir("LiricoAI"))
+    logging.debug("data_dir: %s", user_data_dir("LiricoAI"))
 
     app = Application(sys.argv)
     parse_command_line(app)

@@ -210,9 +210,19 @@ def get_password(key: Key) -> str | None:
     # Fall back to keyring (cross-platform, uses Secret Service on Linux)
     try:
         password = keyring.get_password(APP_NAME, username=key.value)
-        if password is None:
-            return ""
-        return password
+        if password:
+            return password
+
+        # One-time migration from the original Buzz keychain service so existing
+        # Lírico AI users keep their OpenAI configuration after the rebrand.
+        if APP_NAME == "LiricoAI":
+            legacy_password = keyring.get_password("Buzz", username=key.value)
+            if legacy_password:
+                keyring.set_password(APP_NAME, key.value, legacy_password)
+                logging.info("Migrated OpenAI API key from Buzz to LiricoAI keyring")
+                return legacy_password
+
+        return ""
     except Exception as exc:
         logging.warning("Unable to read from keyring: %s", exc)
         return ""

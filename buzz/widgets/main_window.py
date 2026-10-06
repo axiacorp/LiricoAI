@@ -45,6 +45,7 @@ from buzz.widgets.icon import BUZZ_ICON_PATH
 from buzz.widgets.import_url_dialog import ImportURLDialog
 from buzz.widgets.main_window_toolbar import MainWindowToolbar
 from buzz.widgets.menu_bar import MenuBar
+from buzz.widgets.lirico_dashboard import LiricoDashboardWidget
 from buzz.widgets.preferences_dialog.models.preferences import Preferences
 from buzz.widgets.transcriber.file_transcriber_widget import FileTranscriberWidget
 from buzz.widgets.transcription_task_folder_watcher import (
@@ -138,6 +139,9 @@ class MainWindow(QMainWindow):
         self.menu_bar.import_folder_action_triggered.connect(
             self.on_import_folder_action_triggered
         )
+        self.menu_bar.media_converter_action_triggered.connect(
+            self.on_media_converter_action_triggered
+        )
         self.menu_bar.shortcuts_changed.connect(self.on_shortcuts_changed)
         self.menu_bar.openai_api_key_changed.connect(
             self.on_openai_access_token_changed
@@ -157,7 +161,19 @@ class MainWindow(QMainWindow):
             self.on_transcriptions_updated
         )
 
-        self.setCentralWidget(self.table_widget)
+        self.dashboard = LiricoDashboardWidget(
+            history_widget=self.table_widget,
+            on_new_transcription=self.on_new_transcription_action_triggered,
+            on_converter=self.on_media_converter_action_triggered,
+            on_quit=QApplication.instance().quit,
+            parent=self,
+        )
+        self.setCentralWidget(self.dashboard)
+
+        # The legacy Buzz toolbar is kept internally for shortcuts/state, but the
+        # Lírico AI dashboard is now the visible primary navigation.
+        self.toolbar.setVisible(False)
+        self.resize(1180, 780)
 
         # Start transcriber thread
         self.transcriber_thread = QThread()
@@ -285,30 +301,54 @@ class MainWindow(QMainWindow):
             )
             self.add_task(task)
 
+        # A transcrição deve começar imediatamente após o clique em "Transcrever".
+        # Como o formulário é embutido no dashboard, navegar para o Histórico
+        # deixa a nova tarefa visível assim que ela entra na fila, enquanto o
+        # processamento continua em segundo plano.
+        self.dashboard.show_history()
+
     def on_clear_history_action_triggered(self):
         selected_rows = self.table_widget.selectionModel().selectedRows()
         if len(selected_rows) == 0:
             return
 
-        question_box = QMessageBox()
-        question_box.setWindowTitle(_("Clear History"))
-        question_box.setIcon(QMessageBox.Icon.Question)
-        question_box.setText(
-            _(
-                "Are you sure you want to delete the selected transcription(s)? "
-                "This action cannot be undone."
-            ),
+        selected_transcriptions = [
+            self.table_widget.transcription(row) for row in selected_rows
+        ]
+        has_active = any(
+            transcription.status in {"queued", "in_progress"}
+            for transcription in selected_transcriptions
         )
+
+        question_box = QMessageBox()
+        question_box.setWindowTitle("Excluir transcrição")
+        question_box.setIcon(QMessageBox.Icon.Question)
+        if has_active:
+            question_box.setText(
+                "Uma ou mais transcrições selecionadas ainda estão na fila ou em andamento. "
+                "Deseja cancelar o processamento e excluir da lista?"
+            )
+        else:
+            question_box.setText(
+                "Deseja excluir a(s) transcrição(ões) selecionada(s) do Histórico? "
+                "Esta ação não pode ser desfeita."
+            )
         question_box.setStandardButtons(
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-        question_box.button(QMessageBox.StandardButton.Yes).setText(_("Ok"))
-        question_box.button(QMessageBox.StandardButton.No).setText(_("Cancel"))
+        question_box.button(QMessageBox.StandardButton.Yes).setText("Excluir")
+        question_box.button(QMessageBox.StandardButton.No).setText("Cancelar")
 
         reply = question_box.exec()
 
         if reply == QMessageBox.StandardButton.Yes:
-            self.table_widget.delete_transcriptions(selected_rows)
+            for transcription in selected_transcriptions:
+                if transcription.status in {"queued", "in_progress"}:
+                    self.transcriber_worker.cancel_task(UUID(transcription.id))
+
+            rows_to_delete = self.table_widget.selectionModel().selectedRows()
+            self.table_widget.delete_transcriptions(rows_to_delete)
+            self.table_widget.refresh_all()
 
     def on_stop_transcription_action_triggered(self):
         selected_transcriptions = self.table_widget.selected_transcriptions()
@@ -341,6 +381,14 @@ class MainWindow(QMainWindow):
         if url is not None:
             self.open_file_transcriber_widget(url=url)
 
+    def on_media_converter_action_triggered(self):
+        from buzz.widgets.media_converter_dialog import MediaConverterDialog
+
+        self.media_converter_dialog = MediaConverterDialog(self)
+        self.media_converter_dialog.show()
+        self.media_converter_dialog.raise_()
+        self.media_converter_dialog.activateWindow()
+
     def on_import_folder_action_triggered(self):
         last_folder = self.settings.value(Settings.Key.LAST_IMPORT_FOLDER, "")
         folder = QFileDialog.getExistingDirectory(
@@ -357,19 +405,26 @@ class MainWindow(QMainWindow):
     def open_file_transcriber_widget(
         self, file_paths: Optional[List[str]] = None, url: Optional[str] = None
     ):
-        file_transcriber_window = FileTranscriberWidget(
+        self.file_transcriber_window = FileTranscriberWidget(
             file_paths=file_paths,
             url=url,
-            parent=self,
-            flags=Qt.WindowType.Window,
+            parent=self.dashboard,
+            flags=Qt.WindowType.Widget,
         )
-        file_transcriber_window.triggered.connect(self.on_file_transcriber_triggered)
-        file_transcriber_window.openai_access_token_changed.connect(
+        self.file_transcriber_window.triggered.connect(self.on_file_transcriber_triggered)
+        self.file_transcriber_window.openai_access_token_changed.connect(
             self.on_openai_access_token_changed
         )
-        file_transcriber_window.show()
-        file_transcriber_window.raise_()
-        file_transcriber_window.activateWindow()
+
+        if file_paths:
+            display_name = ", ".join(os.path.basename(path) for path in file_paths)
+        else:
+            display_name = url or "Arquivo selecionado"
+
+        self.dashboard.show_transcriber(
+            self.file_transcriber_window,
+            display_name,
+        )
 
     @staticmethod
     def on_openai_access_token_changed(access_token: str):

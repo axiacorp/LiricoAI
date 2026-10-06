@@ -329,8 +329,21 @@ class TranscriptionTasksTableWidget(QTableView):
             
             notes_action = menu.addAction(_("Add/Edit Notes"))
             notes_action.triggered.connect(self.on_notes_action)
+
+            menu.addSeparator()
+            delete_action = menu.addAction("Excluir")
+            delete_action.triggered.connect(self.request_delete_selected)
         
         menu.exec(event.globalPos())
+
+    def request_delete_selected(self):
+        """Ask the main window to delete the selected transcription(s).
+
+        The main window is responsible for cancelling queued/in-progress work
+        before removing database rows.
+        """
+        if self.selectionModel().selectedRows():
+            self.delete_requested.emit()
 
     def save_column_visibility(self):
         self.settings.begin_group(
@@ -589,8 +602,7 @@ class TranscriptionTasksTableWidget(QTableView):
             self.return_clicked.emit()
 
         if event.key() == Qt.Key.Key_Delete:
-            if self.selectionModel().selectedRows():
-                self.delete_requested.emit()
+            self.request_delete_selected()
             return
 
         if event.matches(QKeySequence.StandardKey.Copy):

@@ -49,7 +49,7 @@ class TestMainWindow:
     def test_should_set_window_title_and_icon(self, qtbot, transcription_service):
         window = MainWindow(transcription_service)
         qtbot.add_widget(window)
-        assert window.windowTitle() == "Buzz"
+        assert window.windowTitle() == "LiricoAI"
         assert window.windowIcon().pixmap(QSize(64, 64)).isNull() is False
         window.close()
 

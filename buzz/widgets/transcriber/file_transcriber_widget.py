@@ -1,4 +1,3 @@
-import logging
 from typing import Optional, List, Tuple
 
 from PyQt6 import QtGui
@@ -81,7 +80,8 @@ class FileTranscriberWidget(QWidget):
             self.reset_transcriber_controls
         )
 
-        self.run_button = QPushButton(_("Run"), self)
+        self.run_button = QPushButton("Transcrever", self)
+        self.run_button.setObjectName("liricoRunButton")
         self.run_button.setDefault(True)
         self.run_button.clicked.connect(self.on_click_run)
 
@@ -89,8 +89,15 @@ class FileTranscriberWidget(QWidget):
         layout.addWidget(self.run_button, 0, Qt.AlignmentFlag.AlignRight)
 
         self.setLayout(layout)
-        self.setFixedWidth(self.sizeHint().width() + 50)
-        self.setFixedHeight(self.sizeHint().height())
+        self.setMinimumWidth(560)
+        self.setStyleSheet("""
+            QPushButton#liricoRunButton {
+                background: #ff6b00; color: white; border: none; border-radius: 9px;
+                padding: 11px 18px; font-weight: 700; min-width: 110px;
+            }
+            QPushButton#liricoRunButton:hover { background: #e85f00; }
+            QPushButton#liricoRunButton:disabled { background: #d8cec7; color: #8b817b; }
+        """)
 
         self.reset_transcriber_controls()
 
@@ -116,6 +123,9 @@ class FileTranscriberWidget(QWidget):
         self.settings.settings.endGroup()
 
     def on_click_run(self):
+        # Do not request API keys from customers in the desktop UI.
+        # The commercial OpenAI option will use the Lírico AI backend instead.
+        # Local/free models continue through the normal model loader.
         self.run_button.setDisabled(True)
 
         model_path = self.transcription_options.model.get_local_model_path()

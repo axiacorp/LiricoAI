@@ -1,30 +1,15 @@
 from typing import Optional
 
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QCheckBox,
-    QFormLayout,
-    QHBoxLayout,
-    QComboBox,
-    QLabel,
+    QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QPushButton,
+    QButtonGroup, QFrame
 )
 
-from buzz.locale import _
-from buzz.model_loader import (
-    ModelType,
-    WhisperModelSize,
-    TranscriptionModel,
-)
+from buzz.model_loader import ModelType, WhisperModelSize, TranscriptionModel
 from buzz.settings.settings import Settings
 from buzz.transcriber.transcriber import (
-    TranscriptionOptions,
-    FileTranscriptionOptions,
-    OutputFormat,
-)
-from buzz.widgets.transcriber.transcription_options_group_box import (
-    TranscriptionOptionsGroupBox,
+    TranscriptionOptions, FileTranscriptionOptions, Task
 )
 
 
@@ -36,11 +21,13 @@ CONTENT_PROMPTS = {
         "Não invente conteúdo quando o áudio estiver incerto."
     ),
     "medical_class": (
-        "Aula médica em português brasileiro. Transcreva fielmente o áudio, "
-        "preservando terminologia médica, nomes de medicamentos, doses, vias de "
-        "administração, siglas, exames, anatomia e condutas. Corrija apenas o "
-        "reconhecimento de fala com forte apoio fonético e contextual; não invente "
-        "informações quando o áudio estiver incerto."
+        "Aula médica em português brasileiro. Terminologia clínica e farmacológica. "
+        "Preserve com exatidão doenças, sinais e sintomas, anatomia, exames, siglas, "
+        "nomes de medicamentos, doses, unidades e vias de administração. Vocabulário "
+        "médico provável inclui diagnóstico, tratamento, fisiopatologia, contraindicação, "
+        "adrenalina, anti-histamínico, corticosteroide, broncoespasmo, angioedema, "
+        "urticária, hipotensão, choque, alérgeno, histamina, mastócito, triptase e "
+        "salbutamol. Não invente termos quando o áudio estiver incerto."
     ),
     "meeting": (
         "Reunião em português brasileiro. Preserve nomes, decisões, números, datas "
@@ -51,6 +38,36 @@ CONTENT_PROMPTS = {
         "incluindo nomes próprios, números e termos específicos do assunto."
     ),
 }
+
+MODEL_OPTIONS = [
+    ("Whisper.cpp Tiny — baixado no primeiro uso", ModelType.WHISPER_CPP, WhisperModelSize.TINY, "", "Leve e rápido."),
+    ("Whisper.cpp Base — baixado no primeiro uso", ModelType.WHISPER_CPP, WhisperModelSize.BASE, "", "Modelo local leve."),
+    ("Whisper.cpp Small — baixado no primeiro uso", ModelType.WHISPER_CPP, WhisperModelSize.SMALL, "", "Bom equilíbrio entre velocidade e qualidade."),
+    ("Whisper.cpp Medium — baixado no primeiro uso", ModelType.WHISPER_CPP, WhisperModelSize.MEDIUM, "", "Maior precisão, com maior uso de memória."),
+    ("Whisper.cpp Large V2 — baixado no primeiro uso", ModelType.WHISPER_CPP, WhisperModelSize.LARGEV2, "", "Modelo Whisper grande."),
+    ("Whisper.cpp Large V3 — baixado no primeiro uso", ModelType.WHISPER_CPP, WhisperModelSize.LARGEV3, "", "Alta precisão."),
+    ("Whisper.cpp Large V3 Turbo — baixado no primeiro uso", ModelType.WHISPER_CPP, WhisperModelSize.LARGEV3TURBO, "", "Alta qualidade com melhor velocidade."),
+
+    ("OpenAI Whisper local Tiny — baixado no primeiro uso", ModelType.WHISPER, WhisperModelSize.TINY, "", "Implementação local original do Whisper."),
+    ("OpenAI Whisper local Base — baixado no primeiro uso", ModelType.WHISPER, WhisperModelSize.BASE, "", "Whisper local Base."),
+    ("OpenAI Whisper local Small — baixado no primeiro uso", ModelType.WHISPER, WhisperModelSize.SMALL, "", "Whisper local Small."),
+    ("OpenAI Whisper local Medium — baixado no primeiro uso", ModelType.WHISPER, WhisperModelSize.MEDIUM, "", "Whisper local Medium."),
+    ("OpenAI Whisper local Large V2 — baixado no primeiro uso", ModelType.WHISPER, WhisperModelSize.LARGEV2, "", "Whisper local Large V2."),
+    ("OpenAI Whisper local Large V3 — baixado no primeiro uso", ModelType.WHISPER, WhisperModelSize.LARGEV3, "", "Whisper local Large V3."),
+
+    ("Faster Whisper Tiny — baixado no primeiro uso", ModelType.FASTER_WHISPER, WhisperModelSize.TINY, "", "Whisper otimizado com CTranslate2."),
+    ("Faster Whisper Base — baixado no primeiro uso", ModelType.FASTER_WHISPER, WhisperModelSize.BASE, "", "Faster Whisper Base."),
+    ("Faster Whisper Small — baixado no primeiro uso", ModelType.FASTER_WHISPER, WhisperModelSize.SMALL, "", "Faster Whisper Small."),
+    ("Faster Whisper Medium — baixado no primeiro uso", ModelType.FASTER_WHISPER, WhisperModelSize.MEDIUM, "", "Faster Whisper Medium."),
+    ("Faster Whisper Large V2 — baixado no primeiro uso", ModelType.FASTER_WHISPER, WhisperModelSize.LARGEV2, "", "Faster Whisper Large V2."),
+    ("Faster Whisper Large V3 — baixado no primeiro uso", ModelType.FASTER_WHISPER, WhisperModelSize.LARGEV3, "", "Faster Whisper Large V3."),
+    ("Faster Whisper Large V3 Turbo — baixado no primeiro uso", ModelType.FASTER_WHISPER, WhisperModelSize.LARGEV3TURBO, "", "Faster Whisper Large V3 Turbo."),
+
+    ("Hugging Face Parakeet — instalado sob demanda", ModelType.HUGGING_FACE, None, "nvidia/parakeet-tdt-0.6b-v3", "Baixado na primeira utilização e executado localmente."),
+    ("Hugging Face MMS — instalado sob demanda", ModelType.HUGGING_FACE, None, "facebook/mms-1b-all", "Modelo multilíngue baixado na primeira utilização."),
+    ("Hugging Face VibeVoice ASR — instalado sob demanda", ModelType.HUGGING_FACE, None, "microsoft/VibeVoice-ASR-HF", "Baixado na primeira utilização e executado localmente."),
+    ("Hugging Face Qwen ASR — instalado sob demanda", ModelType.HUGGING_FACE, None, "Qwen/Qwen3-ASR-1.7B-hf", "Baixado na primeira utilização e executado localmente."),
+]
 
 
 class FileTranscriptionFormWidget(QWidget):
@@ -64,220 +81,204 @@ class FileTranscriptionFormWidget(QWidget):
         parent: Optional[QWidget] = None,
     ):
         super().__init__(parent)
-
         self.settings = Settings()
         self.transcription_options = transcription_options
         self.file_transcription_options = file_transcription_options
-
-        layout = QVBoxLayout(self)
-
-        simple_form = QFormLayout()
-
-        self.mode_combo_box = QComboBox(self)
-        self.mode_combo_box.addItem("Automático (recomendado)", "auto")
-        self.mode_combo_box.addItem("Offline", "offline")
-        self.mode_combo_box.addItem("Avançado", "advanced")
-        saved_mode = self.settings.value(
-            Settings.Key.FILE_TRANSCRIBER_UI_MODE, "auto"
-        )
-        mode_index = self.mode_combo_box.findData(saved_mode)
-        self.mode_combo_box.setCurrentIndex(mode_index if mode_index >= 0 else 0)
-        self.mode_combo_box.currentIndexChanged.connect(self.on_mode_changed)
-        simple_form.addRow("Modo:", self.mode_combo_box)
-
-        self.content_type_combo_box = QComboBox(self)
-        self.content_type_combo_box.addItem("Geral", "general")
-        self.content_type_combo_box.addItem("Aula", "class")
-        self.content_type_combo_box.addItem("Aula médica", "medical_class")
-        self.content_type_combo_box.addItem("Reunião", "meeting")
-        self.content_type_combo_box.addItem("Entrevista", "interview")
-        saved_content_type = self.settings.value(
+        self.content_type = self.settings.value(
             Settings.Key.FILE_TRANSCRIBER_CONTENT_TYPE, "general"
         )
-        content_index = self.content_type_combo_box.findData(saved_content_type)
-        self.content_type_combo_box.setCurrentIndex(
-            content_index if content_index >= 0 else 0
-        )
-        self.content_type_combo_box.currentIndexChanged.connect(
-            self.on_content_type_changed
-        )
-        simple_form.addRow("Tipo de conteúdo:", self.content_type_combo_box)
 
-        self.mode_status_label = QLabel(self)
-        self.mode_status_label.setWordWrap(True)
-        simple_form.addRow("", self.mode_status_label)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(14)
 
-        layout.addLayout(simple_form)
-
-        self._apply_mode_to_options(emit=False)
-
-        self.transcription_options_group_box = TranscriptionOptionsGroupBox(
-            default_transcription_options=self.transcription_options, parent=self
-        )
-        self.transcription_options_group_box.transcription_options_changed.connect(
-            self.on_transcription_options_changed
-        )
-        layout.addWidget(self.transcription_options_group_box)
-
-        self.word_level_timings_checkbox = QCheckBox(_("Word-level timings"))
-        self.word_level_timings_checkbox.setChecked(
-            self.transcription_options.word_level_timings
-        )
-        self.word_level_timings_checkbox.stateChanged.connect(
-            self.on_word_level_timings_changed
-        )
-
-        file_transcription_layout = QFormLayout()
-        file_transcription_layout.addRow("", self.word_level_timings_checkbox)
-
-        self.extract_speech_checkbox = QCheckBox(_("Extract speech"))
-        self.extract_speech_checkbox.setChecked(
-            self.transcription_options.extract_speech
-        )
-        self.extract_speech_checkbox.stateChanged.connect(
-            self.on_extract_speech_changed
-        )
-
-        file_transcription_layout.addRow("", self.extract_speech_checkbox)
-
-        export_format_layout = QHBoxLayout()
-        for output_format in OutputFormat:
-            export_format_checkbox = QCheckBox(
-                f"{output_format.value.upper()}", parent=self
+        self.model_combo_box = QComboBox(self)
+        for label, model_type, size, hf_id, description in MODEL_OPTIONS:
+            self.model_combo_box.addItem(
+                label,
+                (model_type.value, size.value if size else None, hf_id, description),
             )
-            export_format_checkbox.setChecked(
-                output_format in self.file_transcription_options.output_formats
-            )
-            export_format_checkbox.stateChanged.connect(
-                self.get_on_checkbox_state_changed_callback(output_format)
-            )
-            export_format_layout.addWidget(export_format_checkbox)
+        current_model = self.transcription_options.model
+        current_index = next(
+            (
+                i for i, item in enumerate(MODEL_OPTIONS)
+                if item[1] == current_model.model_type
+                and item[2] == current_model.whisper_model_size
+                and (item[3] or "") == (current_model.hugging_face_model_id or "")
+            ),
+            -1,
+        )
+        default_index = next(
+            (
+                i for i, item in enumerate(MODEL_OPTIONS)
+                if item[1] == ModelType.WHISPER_CPP
+                and item[2] == WhisperModelSize.LARGEV3TURBO
+            ),
+            0,
+        )
+        self.model_combo_box.setCurrentIndex(
+            current_index if current_index >= 0 else default_index
+        )
+        self.model_combo_box.currentIndexChanged.connect(self.on_model_changed)
+        root.addWidget(self._field("Modelo de transcrição", self.model_combo_box))
 
-        file_transcription_layout.addRow(_("Export:"), export_format_layout)
+        self.language_combo_box = QComboBox(self)
+        for label, code in [
+            ("Português (Brasil)", "pt"),
+            ("Detectar automaticamente", None),
+            ("Inglês", "en"),
+            ("Espanhol", "es"),
+            ("Francês", "fr"),
+            ("Alemão", "de"),
+            ("Italiano", "it"),
+        ]:
+            self.language_combo_box.addItem(label, code)
+        self.language_combo_box.currentIndexChanged.connect(self.on_language_changed)
+        root.addWidget(self._field("Idioma do áudio", self.language_combo_box))
 
-        layout.addLayout(file_transcription_layout)
-        self.setLayout(layout)
+        self.result_combo_box = QComboBox(self)
+        self.result_combo_box.addItem("Transcrever áudio", Task.TRANSCRIBE.value)
+        self.result_combo_box.addItem("Traduzir para inglês", Task.TRANSLATE.value)
+        self.result_combo_box.currentIndexChanged.connect(self.on_result_changed)
+        root.addWidget(self._field("Resultado", self.result_combo_box))
 
-        self._apply_content_prompt(emit=False)
-        self._update_simple_mode_visibility()
+        self.description_card = QFrame()
+        self.description_card.setObjectName("modelDescription")
+        desc_layout = QVBoxLayout(self.description_card)
+        desc_layout.setContentsMargins(16, 13, 16, 13)
+        self.description_title = QLabel()
+        self.description_title.setObjectName("descriptionTitle")
+        self.description_text = QLabel()
+        self.description_text.setWordWrap(True)
+        self.description_text.setObjectName("descriptionText")
+        desc_layout.addWidget(self.description_title)
+        desc_layout.addWidget(self.description_text)
+        root.addWidget(self.description_card)
 
-    def _current_mode(self) -> str:
-        return self.mode_combo_box.currentData() or "auto"
+        content_label = QLabel("Tipo de conteúdo")
+        content_label.setObjectName("fieldLabel")
+        root.addWidget(content_label)
 
-    def _apply_mode_to_options(self, emit: bool = True):
-        mode = self._current_mode()
+        buttons = QHBoxLayout()
+        buttons.setSpacing(8)
+        self.content_group = QButtonGroup(self)
+        self.content_group.setExclusive(True)
+        for label, value in [
+            ("Geral", "general"),
+            ("Aula", "class"),
+            ("Aula médica", "medical_class"),
+            ("Reunião", "meeting"),
+            ("Entrevista", "interview"),
+        ]:
+            button = QPushButton(label)
+            button.setCheckable(True)
+            button.setObjectName("contentButton")
+            button.setProperty("contentValue", value)
+            if value == self.content_type:
+                button.setChecked(True)
+            button.clicked.connect(self.on_content_changed)
+            self.content_group.addButton(button)
+            buttons.addWidget(button)
+        buttons.addStretch(1)
+        root.addLayout(buttons)
 
-        if mode == "auto":
-            if self.transcription_options.openai_access_token:
-                self.transcription_options.model = TranscriptionModel(
-                    model_type=ModelType.OPEN_AI_WHISPER_API,
-                    whisper_model_size=None,
-                )
-                self.mode_status_label.setText(
-                    "Alta precisão online ativada. O Lírico AI usará o modelo "
-                    "de transcrição da OpenAI configurado no aplicativo."
-                )
-            else:
-                self.transcription_options.model = TranscriptionModel(
-                    model_type=ModelType.WHISPER_CPP,
-                    whisper_model_size=WhisperModelSize.LARGEV3TURBO,
-                )
-                self.mode_status_label.setText(
-                    "Sem chave da OpenAI: o Lírico AI usará automaticamente "
-                    "Large-V3-Turbo no próprio computador."
-                )
-        elif mode == "offline":
-            self.transcription_options.model = TranscriptionModel(
-                model_type=ModelType.WHISPER_CPP,
-                whisper_model_size=WhisperModelSize.LARGEV3TURBO,
-            )
-            self.mode_status_label.setText(
-                "Modo offline: Large-V3-Turbo, sem enviar o áudio para a internet."
-            )
-        else:
-            self.mode_status_label.setText(
-                "Modo avançado: escolha manualmente modelo, idioma e demais opções."
-            )
+        self.medical_note = QFrame()
+        self.medical_note.setObjectName("medicalNote")
+        note_layout = QHBoxLayout(self.medical_note)
+        note_layout.setContentsMargins(14, 10, 14, 10)
+        note_layout.addWidget(QLabel("●"))
+        note_text = QLabel(
+            "Contexto médico aplicado   Preserva termos médicos, medicamentos, "
+            "doses, vias, siglas e exames."
+        )
+        note_text.setWordWrap(True)
+        note_layout.addWidget(note_text, 1)
+        root.addWidget(self.medical_note)
 
-        ui_locale = self.settings.value(Settings.Key.UI_LOCALE, "")
-        if not self.transcription_options.language and str(ui_locale).startswith("pt"):
-            self.transcription_options.language = "pt"
+        self.on_model_changed(self.model_combo_box.currentIndex())
+        self.on_language_changed(self.language_combo_box.currentIndex())
+        self.on_result_changed(self.result_combo_box.currentIndex())
+        self._apply_content_prompt()
+        self._refresh_medical_note()
 
-        if emit:
-            self.transcription_options_changed.emit(
-                (self.transcription_options, self.file_transcription_options)
-            )
+        self.setStyleSheet("""
+            QLabel#fieldLabel { font-weight: 700; color: #2a2522; }
+            QComboBox {
+                min-height: 38px; padding: 4px 10px; border: 1px solid #ddd3cc;
+                border-radius: 8px; background: white; color: #241f1c;
+            }
+            QFrame#modelDescription {
+                background: #fbf9f7; border: 1px solid #e7ded7; border-radius: 10px;
+            }
+            QLabel#descriptionTitle { font-weight: 750; font-size: 15px; color: #2a2522; }
+            QLabel#descriptionText { color: #7a7069; }
+            QPushButton#contentButton {
+                background: white; color: #342e2a; border: 1px solid #ddd3cc;
+                border-radius: 8px; padding: 9px 14px;
+            }
+            QPushButton#contentButton:checked {
+                background: #fff5ec; color: #e85f00; border: 1px solid #ff7a1a;
+                font-weight: 700;
+            }
+            QFrame#medicalNote {
+                background: #edf8f1; border: 1px solid #c8e9d2; border-radius: 8px;
+                color: #254c32;
+            }
+        """)
 
-    def _apply_content_prompt(self, emit: bool = True):
-        content_type = self.content_type_combo_box.currentData() or "general"
-        prompt = CONTENT_PROMPTS.get(content_type, "")
-        if content_type != "general" or self._current_mode() != "advanced":
-            self.transcription_options.initial_prompt = prompt
+    def _field(self, label_text: str, widget: QWidget) -> QWidget:
+        wrapper = QWidget(self)
+        layout = QVBoxLayout(wrapper)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        label = QLabel(label_text)
+        label.setObjectName("fieldLabel")
+        layout.addWidget(label)
+        layout.addWidget(widget)
+        return wrapper
 
-        if emit:
-            self.transcription_options_changed.emit(
-                (self.transcription_options, self.file_transcription_options)
-            )
+    def on_model_changed(self, _index: int):
+        model_type_value, size_value, hf_id, description = self.model_combo_box.currentData()
+        model_type = ModelType(model_type_value)
+        size = WhisperModelSize(size_value) if size_value else None
+        self.transcription_options.model = TranscriptionModel(
+            model_type=model_type,
+            whisper_model_size=size,
+            hugging_face_model_id=hf_id,
+        )
+        self.description_title.setText(self.model_combo_box.currentText())
+        self.description_text.setText(description)
+        self._emit_change()
 
-    def _update_simple_mode_visibility(self):
-        advanced = self._current_mode() == "advanced"
-        self.transcription_options_group_box.setVisible(advanced)
-        self.word_level_timings_checkbox.setVisible(advanced)
-        self.extract_speech_checkbox.setVisible(advanced)
+    def on_language_changed(self, _index: int):
+        self.transcription_options.language = self.language_combo_box.currentData()
+        self._emit_change()
 
-    def on_mode_changed(self, _index: int):
+    def on_result_changed(self, _index: int):
+        self.transcription_options.task = Task(self.result_combo_box.currentData())
+        self._emit_change()
+
+    def on_content_changed(self):
+        button = self.sender()
+        if not isinstance(button, QPushButton):
+            return
+        self.content_type = button.property("contentValue") or "general"
         self.settings.set_value(
-            Settings.Key.FILE_TRANSCRIBER_UI_MODE, self._current_mode()
-        )
-        self._apply_mode_to_options()
-        self._update_simple_mode_visibility()
-
-    def on_content_type_changed(self, _index: int):
-        content_type = self.content_type_combo_box.currentData() or "general"
-        self.settings.set_value(
-            Settings.Key.FILE_TRANSCRIBER_CONTENT_TYPE, content_type
+            Settings.Key.FILE_TRANSCRIBER_CONTENT_TYPE, self.content_type
         )
         self._apply_content_prompt()
+        self._refresh_medical_note()
+        self._emit_change()
 
-    def on_transcription_options_changed(
-        self, transcription_options: TranscriptionOptions
-    ):
-        self.transcription_options = transcription_options
+    def _apply_content_prompt(self):
+        self.transcription_options.initial_prompt = CONTENT_PROMPTS.get(
+            self.content_type, ""
+        )
+
+    def _refresh_medical_note(self):
+        self.medical_note.setVisible(self.content_type == "medical_class")
+
+    def _emit_change(self):
         self.transcription_options_changed.emit(
             (self.transcription_options, self.file_transcription_options)
         )
-        if self.transcription_options.openai_access_token != "":
-            self.openai_access_token_changed.emit(
-                self.transcription_options.openai_access_token
-            )
-
-    def on_word_level_timings_changed(self, value: int):
-        self.transcription_options.word_level_timings = (
-            value == Qt.CheckState.Checked.value
-        )
-
-        self.transcription_options_changed.emit(
-            (self.transcription_options, self.file_transcription_options)
-        )
-
-    def on_extract_speech_changed(self, value: int):
-        self.transcription_options.extract_speech = (
-            value == Qt.CheckState.Checked.value
-        )
-
-        self.transcription_options_changed.emit(
-            (self.transcription_options, self.file_transcription_options)
-        )
-
-    def get_on_checkbox_state_changed_callback(self, output_format: OutputFormat):
-        def on_checkbox_state_changed(state: int):
-            if state == Qt.CheckState.Checked.value:
-                self.file_transcription_options.output_formats.add(output_format)
-            elif state == Qt.CheckState.Unchecked.value:
-                self.file_transcription_options.output_formats.remove(output_format)
-
-            self.transcription_options_changed.emit(
-                (self.transcription_options, self.file_transcription_options)
-            )
-
-        return on_checkbox_state_changed

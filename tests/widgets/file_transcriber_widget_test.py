@@ -42,7 +42,7 @@ class TestFileTranscriberWidget:
             file_transcription_options,
             model_path,
         ) = mock_triggered.call_args[0][0]
-        assert transcription_options.language is None
+        assert transcription_options.language == "pt"
         assert file_transcription_options.file_paths == [test_audio_path]
         assert len(model_path) > 0
 
