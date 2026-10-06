@@ -1038,22 +1038,40 @@ class ModelDownloader(QRunnable):
     def download_model_to_path(
         self, url: str, file_path: str, expected_sha256: Optional[str] = None
     ):
-        try:
-            downloaded = self.download_model(url, file_path, expected_sha256)
-            if downloaded:
-                self.signals.finished.emit(file_path)
-        except requests.RequestException as e:
-            self.signals.error.emit(_("A connection error occurred"))
-            if not self.stopped and "timeout" not in str(e).lower():
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-            logging.exception("")
-        except Exception as exc:
-            self.signals.error.emit(str(exc))
-            if not self.stopped:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                logging.exception(exc)
+        last_connection_error = None
+        for attempt in range(3):
+            try:
+                downloaded = self.download_model(url, file_path, expected_sha256)
+                if downloaded:
+                    self.signals.finished.emit(file_path)
+                return
+            except requests.RequestException as exc:
+                last_connection_error = exc
+                if self.stopped:
+                    return
+                logging.warning(
+                    "Model download connection failure (attempt %s/3): %s",
+                    attempt + 1,
+                    exc,
+                )
+                if attempt < 2:
+                    time.sleep(2 * (attempt + 1))
+                    continue
+            except Exception as exc:
+                self.signals.error.emit(str(exc))
+                if not self.stopped:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                    logging.exception(exc)
+                return
+
+        logging.exception(
+            "Model download failed after 3 attempts",
+            exc_info=last_connection_error,
+        )
+        self.signals.error.emit(
+            _("Falha de conexão ao baixar o modelo. Verifique a internet e tente novamente.")
+        )
 
     def _prepare_resume_download(
         self, url: str, file_path: str, expected_sha256: Optional[str]
@@ -1169,7 +1187,7 @@ class ModelDownloader(QRunnable):
             download_path = file_path
 
         try:
-            with requests.get(url, stream=True, timeout=30, headers=headers) as source:
+            with requests.get(url, stream=True, timeout=(15, 120), headers=headers) as source:
                 source.raise_for_status()
 
                 if resume_from > 0:
