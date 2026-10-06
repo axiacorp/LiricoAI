@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lírico AI — Transcrição Web</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#251f1b;background:#f7f4f1}
+*{box-sizing:border-box}body{margin:0}.shell{display:grid;grid-template-columns:245px 1fr;min-height:100vh}
+aside{background:#2b211d;color:white;padding:28px 22px}.brand{font-size:25px;font-weight:800;margin-bottom:42px}.brand span{color:#ff6a00}
+nav div{padding:13px 15px;border-radius:10px;margin:8px 0;background:#3a2d27}.active{background:#ff6500!important}
+main{padding:42px;max-width:1200px;width:100%}.eyebrow{color:#f26722;font-weight:800;font-size:13px;letter-spacing:.08em}
+h1{font-size:38px;margin:8px 0 6px}.sub{color:#766b65;margin-bottom:28px}.card{background:white;border:1px solid #e7ddd6;border-radius:16px;padding:24px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{display:flex;flex-direction:column;gap:7px}label{font-weight:700}
+select,input[type=file],button{font:inherit}select,input[type=file]{border:1px solid #ded3cb;border-radius:9px;padding:12px;background:white}
+button{border:0;border-radius:10px;padding:13px 20px;font-weight:800;cursor:pointer}.primary{background:#ff6500;color:white}
+.primary:disabled{opacity:.45;cursor:not-allowed}.status{padding:12px 14px;border-radius:10px;background:#fff4ea;color:#8e4a1e;margin-top:14px}
+.result{white-space:pre-wrap;line-height:1.65;min-height:180px}.small{font-size:13px;color:#81756e}.ok{color:#176b38;background:#edf8f1}
+@media(max-width:800px){.shell{grid-template-columns:1fr}aside{display:none}main{padding:22px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside>
+  <div class="brand"><span>▥</span> Lírico AI</div>
+  <nav>
+    <div class="active">+ Nova transcrição</div>
+    <div>Histórico</div>
+  </nav>
+</aside>
+<main>
+  <div class="eyebrow">TRANSCRIÇÃO WEB — SERVIDOR LOCAL</div>
+  <h1>Preparar arquivo</h1>
+  <div class="sub">O navegador envia o áudio para o backend rodando neste Mac.</div>
+
+  <div class="card">
+    <h2>1. Selecionar áudio ou vídeo</h2>
+    <input id="file" type="file" accept="audio/*,video/*">
+  </div>
+
+  <div class="card">
+    <h2>2. Configurar transcrição</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="model">Modelo</label>
+        <select id="model">
+          <option value="base" selected>Whisper Base — recomendado para o primeiro teste</option>
+          <option value="tiny">Whisper Tiny</option>
+          <option value="small">Whisper Small</option>
+          <option value="medium">Whisper Medium</option>
+          <option value="large-v2">Whisper Large V2</option>
+          <option value="large-v3">Whisper Large V3</option>
+          <option value="turbo">Whisper Turbo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="language">Idioma</label>
+        <select id="language">
+          <option value="pt" selected>Português (Brasil)</option>
+          <option value="auto">Detectar automaticamente</option>
+          <option value="en">Inglês</option>
+          <option value="es">Espanhol</option>
+        </select>
+      </div>
+    </div>
+    <div id="serverStatus" class="status">Verificando servidor...</div>
+    <p class="small">Na primeira utilização de cada modelo, o próprio Mac fará o download do modelo uma vez.</p>
+    <button id="start" class="primary" disabled>Transcrever</button>
+  </div>
+
+  <div class="card">
+    <h2>Resultado</h2>
+    <div id="result" class="result">A transcrição aparecerá aqui.</div>
+  </div>
+</main>
+</div>
+<script>
+const file=document.getElementById('file'), start=document.getElementById('start');
+const status=document.getElementById('serverStatus'), result=document.getElementById('result');
+const model=document.getElementById('model'), language=document.getElementById('language');
+
+async function health(){
+  try{
+    const r=await fetch('/api/health');
+    const j=await r.json();
+    status.className='status ok';
+    status.textContent='Servidor conectado · dispositivo: '+j.device.toUpperCase();
+    start.disabled=!file.files.length;
+  }catch(e){
+    status.className='status';
+    status.textContent='Servidor não conectado.';
+    start.disabled=true;
+  }
+}
+file.onchange=()=>{start.disabled=!file.files.length};
+start.onclick=async()=>{
+  if(!file.files.length)return;
+  start.disabled=true;
+  result.textContent='Transcrevendo... O primeiro uso do modelo pode demorar porque ele será baixado.';
+  const body=new FormData();
+  body.append('file',file.files[0]);
+  body.append('model',model.value);
+  body.append('language',language.value);
+  body.append('task','transcribe');
+  try{
+    const r=await fetch('/api/transcribe',{method:'POST',body});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.detail||'Erro na transcrição');
+    result.textContent=j.text||'(sem texto reconhecido)';
+    status.className='status ok';
+    status.textContent='Concluído · '+j.model+' · '+j.device.toUpperCase();
+  }catch(e){
+    result.textContent='Erro: '+e.message;
+  }finally{
+    start.disabled=false;
+  }
+};
+health();
+</script>
+</body>
+</html>
