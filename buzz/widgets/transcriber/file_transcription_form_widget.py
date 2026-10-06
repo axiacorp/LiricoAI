@@ -21,11 +21,13 @@ CONTENT_PROMPTS = {
         "Não invente conteúdo quando o áudio estiver incerto."
     ),
     "medical_class": (
-        "Aula médica em português brasileiro. Transcreva fielmente o áudio, "
-        "preservando terminologia médica, nomes de medicamentos, doses, vias de "
-        "administração, siglas, exames, anatomia e condutas. Corrija apenas o "
-        "reconhecimento de fala com forte apoio fonético e contextual; não invente "
-        "informações quando o áudio estiver incerto."
+        "Aula médica em português brasileiro. Terminologia clínica e farmacológica. "
+        "Preserve com exatidão doenças, sinais e sintomas, anatomia, exames, siglas, "
+        "nomes de medicamentos, doses, unidades e vias de administração. Vocabulário "
+        "médico provável inclui diagnóstico, tratamento, fisiopatologia, contraindicação, "
+        "adrenalina, anti-histamínico, corticosteroide, broncoespasmo, angioedema, "
+        "urticária, hipotensão, choque, alérgeno, histamina, mastócito, triptase e "
+        "salbutamol. Não invente termos quando o áudio estiver incerto."
     ),
     "meeting": (
         "Reunião em português brasileiro. Preserve nomes, decisões, números, datas "
