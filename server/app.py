@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
-MODEL_NAMES = ("tiny", "base", "small", "medium", "large-v2", "large-v3", "turbo")
+MODEL_NAMES = ("tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "turbo")
 
 app = FastAPI(title="Lírico AI Local Transcription Server", version="0.1.0")
 app.add_middleware(
@@ -65,15 +65,7 @@ def health():
 @app.get("/api/models")
 def models():
     return {
-        "models": [
-            {"id": "tiny", "label": "Whisper Tiny"},
-            {"id": "base", "label": "Whisper Base"},
-            {"id": "small", "label": "Whisper Small"},
-            {"id": "medium", "label": "Whisper Medium"},
-            {"id": "large-v2", "label": "Whisper Large V2"},
-            {"id": "large-v3", "label": "Whisper Large V3"},
-            {"id": "turbo", "label": "Whisper Turbo"},
-        ],
+        "models": [{"id": name, "label": f"OpenAI Whisper local — {name}"} for name in MODEL_NAMES],
         "recommended_for_first_test": "base",
     }
 
@@ -84,6 +76,7 @@ def transcribe(
     model: str = Form("base"),
     language: str = Form("pt"),
     task: Literal["transcribe", "translate"] = Form("transcribe"),
+    content_type: str = Form("Geral"),
 ):
     if model not in MODEL_NAMES:
         raise HTTPException(status_code=400, detail=f"Modelo inválido: {model}")
@@ -92,6 +85,14 @@ def transcribe(
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         temp_path = Path(tmp.name)
         shutil.copyfileobj(file.file, tmp)
+
+    prompts = {
+        "Aula": "Aula em português brasileiro. Preserve termos técnicos, nomes próprios, números e unidades.",
+        "Aula médica": "Aula médica em português brasileiro. Preserve terminologia médica, medicamentos, doses, vias, siglas, exames, anatomia e condutas. Não invente conteúdo incerto.",
+        "Reunião": "Reunião em português brasileiro. Preserve nomes, decisões, números, datas e termos profissionais.",
+        "Entrevista": "Entrevista em português brasileiro. Preserve nomes próprios, números e termos específicos.",
+    }
+    initial_prompt = prompts.get(content_type, "")
 
     device = preferred_device()
     used_device = device
@@ -105,6 +106,7 @@ def transcribe(
                 task=task,
                 fp16=device in {"cuda", "mps"},
                 verbose=False,
+                initial_prompt=initial_prompt or None,
             )
         except Exception:
             # Apple Silicon support varies between Torch/Whisper releases.
@@ -119,6 +121,7 @@ def transcribe(
                 task=task,
                 fp16=False,
                 verbose=False,
+                initial_prompt=initial_prompt or None,
             )
 
         return {
