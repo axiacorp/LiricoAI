@@ -60,19 +60,18 @@ button,input,select{font:inherit}button{cursor:pointer}
   <div class="field">
     <label>Modelo de transcrição</label>
     <select id="model" onchange="modelChange()">
-  <optgroup label="OPENAI WHISPER LOCAL — PROCESSADO NESTE MAC">
-    <option value="tiny">OpenAI Whisper local — Tiny</option>
-    <option value="tiny.en">OpenAI Whisper local — Tiny.en (inglês)</option>
-    <option value="base" selected>OpenAI Whisper local — Base</option>
-    <option value="base.en">OpenAI Whisper local — Base.en (inglês)</option>
-    <option value="small">OpenAI Whisper local — Small</option>
-    <option value="small.en">OpenAI Whisper local — Small.en (inglês)</option>
-    <option value="medium">OpenAI Whisper local — Medium</option>
-    <option value="medium.en">OpenAI Whisper local — Medium.en (inglês)</option>
-    <option value="large-v1">OpenAI Whisper local — Large V1</option>
-    <option value="large-v2">OpenAI Whisper local — Large V2</option>
-    <option value="large-v3">OpenAI Whisper local — Large V3</option>
-    <option value="turbo">OpenAI Whisper local — Turbo</option>
+  <optgroup label="Rápido">
+    <option value="tiny">Rápido — Tiny</option>
+    <option value="base" selected>Rápido — Base</option>
+  </optgroup>
+  <optgroup label="Equilibrado">
+    <option value="small">Equilibrado — Small</option>
+  </optgroup>
+  <optgroup label="Alta precisão">
+    <option value="turbo">Alta precisão — Turbo</option>
+  </optgroup>
+  <optgroup label="Máxima precisão">
+    <option value="large-v3">Máxima precisão — Large V3</option>
   </optgroup>
 </select>
     <div class="availability" id="availability"><strong>Disponibilidade:</strong> processado pelo servidor local neste Mac.</div>
@@ -113,8 +112,8 @@ button,input,select{font:inherit}button{cursor:pointer}
   </div>
 
   <div id="modelDesc" class="modeldesc">
-    <strong>OpenAI Whisper local — Base</strong>
-    <span class="note">Modelo recomendado para o primeiro teste. É baixado uma vez e fica em cache neste Mac.</span>
+    <strong>Rápido — Base</strong>
+    <span class="note">Rápido: Tiny/Base • Equilibrado: Small • Alta precisão: Turbo • Máxima precisão: Large V3.</span>
   </div>
 
   <div id="paidBox" class="paid" style="display:none">
@@ -276,9 +275,15 @@ function modelChange(){
   const label=select.selectedOptions[0]?.textContent || 'Modelo';
   const d=document.getElementById('modelDesc');
   const a=document.getElementById('availability');
-  const englishOnly=v.endsWith('.en');
+  const descriptions={
+    'tiny':'Prioriza velocidade. Indicado para testes rápidos e áudios simples.',
+    'base':'Prioriza velocidade com mais qualidade que o Tiny.',
+    'small':'Equilíbrio entre velocidade e precisão.',
+    'turbo':'Alta precisão com processamento otimizado.',
+    'large-v3':'Máxima precisão. Recomendado quando a qualidade é prioridade, especialmente em conteúdos complexos.'
+  };
   d.innerHTML='<strong>'+label+'</strong><span class="note">'+
-    (englishOnly?'Modelo especializado apenas em inglês.':'Modelo OpenAI Whisper executado localmente no servidor deste Mac.')+
+    (descriptions[v]||'Modelo OpenAI Whisper executado localmente no servidor deste Mac.')+
     ' Na primeira utilização ele será baixado e depois ficará em cache.</span>';
   a.innerHTML='<strong>Disponibilidade:</strong> servidor local deste Mac.';
 }
